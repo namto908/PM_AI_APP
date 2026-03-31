@@ -1,0 +1,5 @@
+# TaskOps AI Server Agent Configuration
+api_url: "http://localhost:8000"
+agent_token: "YOUR_AGENT_TOKEN_HERE"
+interval_seconds: 60
+collect_network: true

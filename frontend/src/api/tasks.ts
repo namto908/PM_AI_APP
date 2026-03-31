@@ -1,0 +1,79 @@
+import client from './client';
+
+export interface Task {
+  id: string;
+  workspace_id: string;
+  project_id: string | null;
+  parent_id: string | null;
+  title: string;
+  description: string | null;
+  status: 'todo' | 'in_progress' | 'in_review' | 'done' | 'cancelled';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assignee_id: string | null;
+  due_date: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedTasks {
+  items: Task[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface TaskFilter {
+  status?: string;
+  priority?: string;
+  project_id?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface TaskCreate {
+  title: string;
+  description?: string;
+  project_id?: string;
+  priority?: string;
+  assignee_id?: string;
+  due_date?: string;
+  tags?: string[];
+}
+
+export interface TaskUpdate {
+  title?: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  assignee_id?: string;
+  due_date?: string;
+}
+
+export interface TaskComment {
+  id: string;
+  task_id: string;
+  user_id: string | null;
+  content: string;
+  created_at: string;
+}
+
+export const tasksApi = {
+  list: (workspaceId: string, filters: TaskFilter = {}) =>
+    client.get<PaginatedTasks>(`/workspaces/${workspaceId}/tasks`, { params: filters }),
+
+  get: (workspaceId: string, taskId: string) =>
+    client.get<Task>(`/workspaces/${workspaceId}/tasks/${taskId}`),
+
+  create: (workspaceId: string, data: TaskCreate) =>
+    client.post<Task>(`/workspaces/${workspaceId}/tasks`, data),
+
+  update: (workspaceId: string, taskId: string, data: TaskUpdate) =>
+    client.patch<Task>(`/workspaces/${workspaceId}/tasks/${taskId}`, data),
+
+  addComment: (workspaceId: string, taskId: string, content: string) =>
+    client.post(`/workspaces/${workspaceId}/tasks/${taskId}/comments`, { content }),
+
+  getComments: (workspaceId: string, taskId: string) =>
+    client.get<TaskComment[]>(`/workspaces/${workspaceId}/tasks/${taskId}/comments`),
+};

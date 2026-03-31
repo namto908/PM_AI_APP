@@ -53,19 +53,19 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isUser
             ? 'bg-[#6bd8cb] text-[#003732] font-medium rounded-br-sm'
-            : 'bg-[#131b2e] border border-slate-800/60 text-[#dae2fd] rounded-bl-sm'
+            : 'bg-card border border-slate-800/60 text-text1 rounded-bl-sm'
         }`}
       >
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
           <div className="prose prose-sm max-w-none
-            prose-p:text-[#dae2fd] prose-p:my-1
-            prose-headings:text-[#dae2fd] prose-headings:font-bold
+            prose-p:text-text1 prose-p:my-1
+            prose-headings:text-text1 prose-headings:font-bold
             prose-strong:text-[#6bd8cb]
-            prose-code:text-[#b4c5ff] prose-code:bg-[#222a3d] prose-code:px-1 prose-code:rounded
-            prose-pre:bg-[#222a3d] prose-pre:border prose-pre:border-slate-700/50
-            prose-li:text-[#dae2fd] prose-li:my-0.5
+            prose-code:text-[#b4c5ff] prose-code:bg-input prose-code:px-1 prose-code:rounded
+            prose-pre:bg-input prose-pre:border prose-pre:border-slate-700/50
+            prose-li:text-text1 prose-li:my-0.5
             prose-a:text-[#6bd8cb]">
             <ReactMarkdown>{message.content || '...'}</ReactMarkdown>
           </div>
@@ -126,13 +126,13 @@ export default function AIChatPage() {
       {/* ── Left panel ──────────────────────────────────────────────── */}
       <div className="w-64 flex-shrink-0 flex flex-col gap-4">
         {/* AI identity card */}
-        <div className="bg-[#131b2e] rounded-2xl p-5">
+        <div className="bg-card rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-[#6bd8cb]/10 flex items-center justify-center">
               <Sparkles size={18} className="text-[#6bd8cb]" />
             </div>
             <div>
-              <p className="text-sm font-bold text-[#dae2fd]">TaskOps AI</p>
+              <p className="text-sm font-bold text-text1">TaskOps AI</p>
               <p className="text-[10px] text-slate-500 uppercase tracking-widest">Assistant</p>
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function AIChatPage() {
             </div>
             <div className="flex justify-between py-1.5 border-b border-slate-800/30">
               <span className="text-[10px] text-slate-500">Messages</span>
-              <span className="text-[10px] font-bold text-[#dae2fd]">{messages.filter(m => m.role !== 'thinking').length}</span>
+              <span className="text-[10px] font-bold text-text1">{messages.filter(m => m.role !== 'thinking').length}</span>
             </div>
             <div className="flex justify-between py-1.5">
               <span className="text-[10px] text-slate-500">Mode</span>
@@ -156,7 +156,7 @@ export default function AIChatPage() {
         </div>
 
         {/* Suggestion chips */}
-        <div className="bg-[#131b2e] rounded-2xl p-4 flex-1">
+        <div className="bg-card rounded-2xl p-4 flex-1">
           <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Gợi ý</h3>
           <div className="space-y-2">
             {SUGGESTIONS.map(({ icon: Icon, text }) => (
@@ -164,7 +164,7 @@ export default function AIChatPage() {
                 key={text}
                 onClick={() => setInput(text)}
                 disabled={isStreaming}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-[#171f33] hover:bg-[#222a3d] disabled:opacity-40 rounded-xl text-left text-xs text-slate-300 hover:text-[#dae2fd] transition-colors group"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-card2 hover:bg-input disabled:opacity-40 rounded-xl text-left text-xs text-slate-300 hover:text-text1 transition-colors group"
               >
                 <Icon size={13} className="text-[#6bd8cb] flex-shrink-0" />
                 <span className="leading-snug">{text}</span>
@@ -190,7 +190,7 @@ export default function AIChatPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div>
-            <h1 className="text-2xl font-bold text-[#dae2fd] tracking-tight">AI Chat</h1>
+            <h1 className="text-2xl font-bold text-text1 tracking-tight">AI Chat</h1>
             <p className="text-xs text-slate-500 mt-0.5">Hỏi bất cứ điều gì về tasks và hệ thống của bạn</p>
           </div>
           {isStreaming && (
@@ -202,9 +202,9 @@ export default function AIChatPage() {
         </div>
 
         {/* Messages list */}
-        <div className="flex-1 overflow-y-auto bg-[#0b1326] rounded-2xl border border-slate-800/30 p-6 mb-4
+        <div className="flex-1 overflow-y-auto bg-page rounded-2xl border border-slate-800/30 p-6 mb-4
           [&::-webkit-scrollbar]:w-[3px]
-          [&::-webkit-scrollbar-thumb]:bg-[#2d3449]
+          [&::-webkit-scrollbar-thumb]:bg-input2
           [&::-webkit-scrollbar-thumb:hover]:bg-[#6bd8cb]
           [&::-webkit-scrollbar-track]:bg-transparent">
 
@@ -214,7 +214,7 @@ export default function AIChatPage() {
                 <Sparkles size={28} className="text-[#6bd8cb]" />
               </div>
               <div>
-                <p className="text-[#dae2fd] font-semibold mb-1">Xin chào! Tôi là TaskOps AI</p>
+                <p className="text-text1 font-semibold mb-1">Xin chào! Tôi là TaskOps AI</p>
                 <p className="text-sm text-slate-500 max-w-xs">
                   Hỏi tôi về tasks, servers, alerts hoặc bất kỳ thứ gì trong workspace của bạn.
                 </p>
@@ -224,7 +224,7 @@ export default function AIChatPage() {
                   <button
                     key={text}
                     onClick={() => setInput(text)}
-                    className="flex items-center gap-1.5 text-xs bg-[#131b2e] hover:bg-[#171f33] border border-slate-800/50 text-slate-400 hover:text-[#dae2fd] px-3 py-1.5 rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 text-xs bg-card hover:bg-card2 border border-slate-800/50 text-slate-400 hover:text-text1 px-3 py-1.5 rounded-xl transition-colors"
                   >
                     <Icon size={11} className="text-[#6bd8cb]" />
                     {text}
@@ -249,7 +249,7 @@ export default function AIChatPage() {
               <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-[#6bd8cb]/10 flex items-center justify-center mr-3 mt-0.5">
                 <Sparkles size={13} className="text-[#6bd8cb]" />
               </div>
-              <div className="bg-[#131b2e] border border-slate-800/60 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
+              <div className="bg-card border border-slate-800/60 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -261,7 +261,7 @@ export default function AIChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="flex-shrink-0 bg-[#131b2e] rounded-2xl p-3 flex items-end gap-3 border border-slate-800/40">
+        <div className="flex-shrink-0 bg-card rounded-2xl p-3 flex items-end gap-3 border border-slate-800/40">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -269,7 +269,7 @@ export default function AIChatPage() {
             disabled={isStreaming}
             rows={2}
             placeholder="Nhập câu hỏi... (Enter để gửi, Shift+Enter xuống dòng)"
-            className="flex-1 resize-none bg-transparent border-none text-sm text-[#dae2fd] placeholder-slate-500 focus:outline-none focus:ring-0 disabled:opacity-50 py-1 leading-relaxed"
+            className="flex-1 resize-none bg-transparent border-none text-sm text-text1 placeholder-slate-500 focus:outline-none focus:ring-0 disabled:opacity-50 py-1 leading-relaxed"
           />
           <button
             onClick={handleSend}

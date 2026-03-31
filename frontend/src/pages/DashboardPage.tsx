@@ -26,7 +26,7 @@ function KpiCard({
   border?: boolean;
 }) {
   return (
-    <div className={`bg-[#131b2e] p-6 rounded-xl flex items-center justify-between hover:bg-[#171f33] transition-colors${border ? ' border-l-4 border-[#ffb4ab]' : ''}`}>
+    <div className={`bg-card p-6 rounded-xl flex items-center justify-between hover:bg-card2 transition-colors${border ? ' border-l-4 border-[#ffb4ab]' : ''}`}>
       <div>
         <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-1">{label}</p>
         <h3 className={`text-4xl font-bold ${color}`}>{value}</h3>
@@ -50,17 +50,17 @@ function OverdueRow({ task }: { task: Task }) {
   const badgeMap: Record<string, string> = {
     urgent: 'bg-[#ffb59a]/10 text-[#ffb59a]',
     high: 'bg-[#ffb59a]/10 text-[#ffb59a]',
-    medium: 'bg-[#222a3d] text-slate-400',
-    low: 'bg-[#222a3d] text-slate-400',
+    medium: 'bg-input text-slate-400',
+    low: 'bg-input text-slate-400',
   };
   const Icon = iconMap[task.priority] ?? ClipboardList;
   return (
-    <div className="p-4 flex items-center gap-4 hover:bg-[#171f33] transition-colors">
-      <div className="w-10 h-10 rounded-lg bg-[#222a3d] flex items-center justify-center flex-shrink-0">
+    <div className="p-4 flex items-center gap-4 hover:bg-card2 transition-colors">
+      <div className="w-10 h-10 rounded-lg bg-input flex items-center justify-center flex-shrink-0">
         <Icon size={18} className={colorMap[task.priority]} />
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-bold text-[#dae2fd] truncate">{task.title}</h4>
+        <h4 className="text-sm font-bold text-text1 truncate">{task.title}</h4>
         <p className="text-xs text-slate-500 truncate">
           {task.due_date ? `Due ${task.due_date}` : 'No due date'} · {task.status.replace(/_/g, ' ')}
         </p>
@@ -84,7 +84,7 @@ function AlertRow({ alert, onResolve }: { alert: Alert; onResolve: () => void })
   };
 
   return (
-    <div className={`p-3 rounded-lg ${isCritical ? 'bg-[#ffb4ab]/5 border-l-2 border-[#ffb4ab]' : 'bg-[#171f33]'}`}>
+    <div className={`p-3 rounded-lg ${isCritical ? 'bg-[#ffb4ab]/5 border-l-2 border-[#ffb4ab]' : 'bg-card2'}`}>
       <div className="flex items-start justify-between mb-1.5">
         <span className={`text-xs font-bold ${isCritical ? 'text-[#ffb4ab]' : 'text-[#ffb59a]'}`}>
           {alert.title}
@@ -104,7 +104,7 @@ function AlertRow({ alert, onResolve }: { alert: Alert; onResolve: () => void })
           </button>
           <button
             onClick={onResolve}
-            className="text-[10px] font-bold bg-[#222a3d] text-slate-400 px-2 py-1 rounded hover:bg-[#2d3449]"
+            className="text-[10px] font-bold bg-input text-slate-400 px-2 py-1 rounded hover:bg-input2"
           >
             Dismiss
           </button>
@@ -152,17 +152,17 @@ export default function DashboardPage() {
         <div className="xl:col-span-2 space-y-8">
 
           {/* System Performance chart */}
-          <div className="bg-[#131b2e] p-6 rounded-xl">
+          <div className="bg-card p-6 rounded-xl">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-xl font-bold text-[#dae2fd]">System Performance</h2>
+                <h2 className="text-xl font-bold text-text1">System Performance</h2>
                 <p className="text-xs text-slate-500">24h telemetry overview across all clusters</p>
               </div>
               <div className="flex gap-2">
-                <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#171f33] text-[10px] font-bold text-[#dae2fd]">
+                <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-card2 text-[10px] font-bold text-text1">
                   <span className="w-2 h-2 rounded-full bg-[#6bd8cb]" /> CPU
                 </span>
-                <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#171f33] text-[10px] font-bold text-[#dae2fd]">
+                <span className="flex items-center gap-1.5 px-2 py-1 rounded bg-card2 text-[10px] font-bold text-text1">
                   <span className="w-2 h-2 rounded-full bg-[#b4c5ff]" /> RAM
                 </span>
               </div>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Overdue tasks list */}
-          <div className="bg-[#131b2e] rounded-xl overflow-hidden">
+          <div className="bg-card rounded-xl overflow-hidden">
             <div className="px-6 py-4 flex items-center justify-between border-b border-slate-800/40">
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Overdue Tasks</h2>
               <button
@@ -219,7 +219,7 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => navigate('/monitoring')}
-              className="w-full flex items-center justify-between p-4 bg-[#131b2e] text-[#dae2fd] rounded-xl font-bold border border-slate-800/40 hover:bg-[#171f33] transition-all group"
+              className="w-full flex items-center justify-between p-4 bg-card text-text1 rounded-xl font-bold border border-slate-800/40 hover:bg-card2 transition-all group"
             >
               <div className="flex items-center gap-3">
                 <Cpu size={20} className="text-[#6bd8cb]" />
@@ -229,7 +229,7 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => navigate('/ai')}
-              className="w-full flex items-center justify-between p-4 bg-[#131b2e] text-[#dae2fd] rounded-xl font-bold border border-slate-800/40 hover:bg-[#171f33] transition-all group"
+              className="w-full flex items-center justify-between p-4 bg-card text-text1 rounded-xl font-bold border border-slate-800/40 hover:bg-card2 transition-all group"
             >
               <div className="flex items-center gap-3">
                 <Bot size={20} className="text-[#b4c5ff]" />
@@ -240,7 +240,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Critical alerts */}
-          <div className="bg-[#131b2e] rounded-xl overflow-hidden">
+          <div className="bg-card rounded-xl overflow-hidden">
             <div className="px-6 py-4 flex items-center justify-between border-b border-slate-800/40">
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Critical Alerts</h2>
               <button
@@ -261,11 +261,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Active workspace card */}
-          <div className="bg-[#131b2e] p-6 rounded-xl relative overflow-hidden">
+          <div className="bg-card p-6 rounded-xl relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-[#6bd8cb]/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
               <p className="text-[10px] uppercase tracking-widest font-bold text-[#6bd8cb] mb-2">Overview</p>
-              <h3 className="text-lg font-bold text-[#dae2fd] mb-1">Workspace Stats</h3>
+              <h3 className="text-lg font-bold text-text1 mb-1">Workspace Stats</h3>
               <p className="text-xs text-slate-400 mb-5">Summary of tasks, alerts and infrastructure.</p>
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
@@ -273,14 +273,14 @@ export default function DashboardPage() {
                     <Database size={14} className="text-[#b4c5ff]" />
                     Total tasks
                   </div>
-                  <span className="font-bold text-[#dae2fd]">{tasks?.total ?? 0}</span>
+                  <span className="font-bold text-text1">{tasks?.total ?? 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2 text-slate-400">
                     <Server size={14} className="text-[#6bd8cb]" />
                     Active servers
                   </div>
-                  <span className="font-bold text-[#dae2fd]">{servers.filter((s) => s.is_active).length}</span>
+                  <span className="font-bold text-text1">{servers.filter((s) => s.is_active).length}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2 text-slate-400">

@@ -9,6 +9,8 @@ from app.auth.schemas import (
     WorkspaceCreate,
     WorkspaceResponse,
     UserResponse,
+    UserUpdateRequest,
+    ChangePasswordRequest,
 )
 from app.auth.service import AuthService
 from app.auth.dependencies import get_current_user
@@ -30,6 +32,24 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
 async def me(current_user: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     user = await AuthService(db).get_me(current_user["user_id"])
     return user
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(
+    body: UserUpdateRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await AuthService(db).update_me(current_user["user_id"], body)
+
+
+@router.post("/me/change-password", status_code=204)
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await AuthService(db).change_password(current_user["user_id"], body)
 
 
 @router.post("/workspaces", response_model=WorkspaceResponse, status_code=201)

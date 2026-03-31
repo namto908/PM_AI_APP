@@ -7,7 +7,11 @@ from datetime import datetime, timedelta
 import uuid
 
 from app.auth.models import User, Workspace, WorkspaceMember
-from app.auth.schemas import RegisterRequest, LoginRequest, TokenResponse, WorkspaceCreate, WorkspaceResponse
+from app.auth.schemas import (
+    RegisterRequest, LoginRequest, TokenResponse,
+    WorkspaceCreate, WorkspaceResponse,
+    UserUpdateRequest, ChangePasswordRequest,
+)
 from app.common.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -86,6 +90,29 @@ class AuthService:
         await self.db.refresh(workspace)
 
         return WorkspaceResponse(id=workspace.id, name=workspace.name, slug=workspace.slug, role="owner")
+
+    async def update_me(self, user_id: str, body: UserUpdateRequest) -> User:
+        user = await self.get_me(user_id)
+        if body.email and body.email != user.email:
+            conflict = await self.db.execute(select(User).where(User.email == body.email))
+            if conflict.scalar_one_or_none():
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+            user.email = str(body.email)
+        if body.name is not None:
+            stripped = body.name.strip()
+            if not stripped:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Name cannot be empty")
+            user.name = stripped
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
+    async def change_password(self, user_id: str, body: ChangePasswordRequest) -> None:
+        user = await self.get_me(user_id)
+        if not _verify_password(body.current_password, user.password_hash):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+        user.password_hash = _hash_password(body.new_password)
+        await self.db.commit()
 
     async def list_workspaces(self, current_user: dict) -> list[WorkspaceResponse]:
         user_id = uuid.UUID(current_user["user_id"])

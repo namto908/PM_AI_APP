@@ -1,5 +1,45 @@
 @import "tailwindcss";
 
+/* Tailwind v4: enable class-based dark mode (toggle .dark on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Semantic color tokens — structural backgrounds & text
+ * Accent colors (#6bd8cb, #ffb4ab, #ffb59a, #b4c5ff) are fixed and don't change.
+ */
+
+/* Light mode defaults */
+:root {
+  --page-rgb:   241 245 249;   /* page bg     —  light: #f1f5f9  */
+  --card-rgb:   255 255 255;   /* card bg      — light: #ffffff   */
+  --card2-rgb:  248 250 252;   /* card inner   — light: #f8fafc   */
+  --input-rgb:  241 245 249;   /* input/muted  — light: #f1f5f9   */
+  --input2-rgb: 226 232 240;   /* input hover  — light: #e2e8f0   */
+  --text1-rgb:  30 41 59;      /* primary text — light: #1e293b   */
+  --border-dim: rgba(100 116 139 / 0.15);
+}
+
+/* Dark mode overrides */
+.dark {
+  --page-rgb:   11 19 38;      /* #0b1326 */
+  --card-rgb:   19 27 46;      /* #131b2e */
+  --card2-rgb:  23 31 51;      /* #171f33 */
+  --input-rgb:  34 42 61;      /* #222a3d */
+  --input2-rgb: 45 52 73;      /* #2d3449 */
+  --text1-rgb:  218 226 253;   /* #dae2fd */
+  --border-dim: rgba(30 41 59 / 0.3);
+}
+
+/* Register as Tailwind color tokens (supports bg-card/50 opacity modifiers) */
+@theme inline {
+  --color-page:    rgb(var(--page-rgb) / <alpha-value>);
+  --color-card:    rgb(var(--card-rgb) / <alpha-value>);
+  --color-card2:   rgb(var(--card2-rgb) / <alpha-value>);
+  --color-input:   rgb(var(--input-rgb) / <alpha-value>);
+  --color-input2:  rgb(var(--input2-rgb) / <alpha-value>);
+  --color-text1:   rgb(var(--text1-rgb) / <alpha-value>);
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;

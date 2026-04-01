@@ -18,7 +18,14 @@ async def create_task(
     from app.work.service import WorkService
     from app.work.schemas import TaskCreate
 
-    assignee = uuid.UUID(assignee_id) if assignee_id else None
+    try:
+        assignee = uuid.UUID(assignee_id) if assignee_id else None
+    except (ValueError, AttributeError):
+        raise ValueError(
+            f"assignee_id không hợp lệ: '{assignee_id}'. "
+            "Vui lòng cung cấp UUID hợp lệ. "
+            "Nếu muốn giao cho bản thân, hãy dùng 'Current user ID' từ context."
+        )
     parsed_due = date.fromisoformat(due_date) if due_date else None
 
     body = TaskCreate(

@@ -4,9 +4,15 @@ import uuid
 from datetime import datetime
 
 
+class PendingTool(BaseModel):
+    name: str
+    args: dict = {}
+
+
 class ChatRequest(BaseModel):
     message: str
     conversation_id: Optional[uuid.UUID] = None
+    pending_tool: Optional[PendingTool] = None
 
 
 class ConversationResponse(BaseModel):

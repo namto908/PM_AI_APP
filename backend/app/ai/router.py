@@ -46,6 +46,9 @@ async def chat(
     message_lower = body.message.strip().lower()
     user_confirmed = message_lower in ("yes", "có", "xác nhận", "ok", "đồng ý")
 
+    # Convert pending_tool Pydantic model → plain dict for orchestrator
+    pending_tool = body.pending_tool.model_dump() if body.pending_tool else None
+
     async def event_stream():
         try:
             orchestrator = AgentOrchestrator(db, workspace_id, user_id)
@@ -53,6 +56,7 @@ async def chat(
                 user_message=body.message,
                 conversation_id=body.conversation_id,
                 user_confirmed=user_confirmed,
+                pending_tool=pending_tool,
             ):
                 yield chunk
         except Exception as e:

@@ -98,7 +98,7 @@ class AgentOrchestrator:
         Main agent loop — yields SSE-formatted data chunks.
         Handles tool calls with safety confirmation for write actions.
         """
-        context = await self.context_builder.build(self.workspace_id)
+        context = await self.context_builder.build(self.workspace_id, self.user_id)
 
         # Planning step — skip for confirmation responses
         plan_result = None

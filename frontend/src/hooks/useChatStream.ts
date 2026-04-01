@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { AI_CHAT_URL } from '@/api/ai';
 
@@ -16,12 +16,47 @@ export interface StreamMeta {
   done?: boolean;
 }
 
+function storageKey(workspaceId: string) {
+  return `chat_history_${workspaceId}`;
+}
+
+function loadHistory(workspaceId: string): { messages: ChatMessage[]; conversationId: string | null } {
+  try {
+    const raw = localStorage.getItem(storageKey(workspaceId));
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return { messages: [], conversationId: null };
+}
+
 export function useChatStream(workspaceId: string | null) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    workspaceId ? loadHistory(workspaceId).messages : []
+  );
   const [isStreaming, setIsStreaming] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(() =>
+    workspaceId ? loadHistory(workspaceId).conversationId : null
+  );
   const [meta, setMeta] = useState<StreamMeta | null>(null);
   const token = useAuthStore((s) => s.token);
+
+  // Reload history when workspace changes
+  useEffect(() => {
+    if (!workspaceId) return;
+    const saved = loadHistory(workspaceId);
+    setMessages(saved.messages);
+    setConversationId(saved.conversationId);
+  }, [workspaceId]);
+
+  // Persist whenever messages or conversationId change
+  useEffect(() => {
+    if (!workspaceId) return;
+    localStorage.setItem(
+      storageKey(workspaceId),
+      JSON.stringify({ messages, conversationId })
+    );
+  }, [workspaceId, messages, conversationId]);
 
   const send = useCallback(
     async (text: string) => {
@@ -34,12 +69,16 @@ export function useChatStream(workspaceId: string | null) {
       };
       setMessages((prev) => [...prev, userMsg]);
       setIsStreaming(true);
+
+      // Capture pending_tool BEFORE clearing meta — needed when user is confirming a write action
+      const pendingTool = meta?.awaiting_confirm ? meta.pending_tool : undefined;
       setMeta(null);
 
       const apiUrl = AI_CHAT_URL(workspaceId);
       const body = JSON.stringify({
         message: text,
         conversation_id: conversationId,
+        ...(pendingTool ? { pending_tool: pendingTool } : {}),
       });
 
       const response = await fetch(apiUrl, {
@@ -106,14 +145,15 @@ export function useChatStream(workspaceId: string | null) {
 
       setIsStreaming(false);
     },
-    [workspaceId, token, conversationId, isStreaming]
+    [workspaceId, token, conversationId, isStreaming, meta]
   );
 
   const clear = useCallback(() => {
     setMessages([]);
     setConversationId(null);
     setMeta(null);
-  }, []);
+    if (workspaceId) localStorage.removeItem(storageKey(workspaceId));
+  }, [workspaceId]);
 
   return { messages, isStreaming, send, clear, conversationId, meta };
 }

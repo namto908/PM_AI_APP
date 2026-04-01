@@ -17,7 +17,7 @@ class ContextBuilder:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def build(self, workspace_id: uuid.UUID) -> str:
+    async def build(self, workspace_id: uuid.UUID, user_id: uuid.UUID | None = None) -> str:
         today = date.today()
 
         urgent = await count_tasks(
@@ -57,7 +57,13 @@ class ContextBuilder:
         except Exception:
             pass
 
-        lines = [f"Workspace ID: {workspace_id}"]
+        lines = [
+            f"Workspace ID: {workspace_id}",
+            f"Hôm nay là: {today.isoformat()} # Dùng ngày này làm mốc thời gian."
+        ]
+        if user_id:
+            # Expose current user UUID so AI can resolve "tôi/me" to the correct assignee_id
+            lines.append(f"Current user ID: {user_id}  # Dùng UUID này khi user nói 'tôi', 'giao cho tôi', 'me'")
         lines.append(f"Tasks: {in_progress} đang xử lý, {urgent} urgent, {overdue} quá hạn")
         if open_alerts:
             lines.append(f"Alert đang mở: {open_alerts}")

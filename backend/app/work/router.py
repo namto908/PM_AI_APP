@@ -14,6 +14,7 @@ from app.work.schemas import (
     CommentCreate,
     CommentResponse,
     PaginatedTasks,
+    ActivityResponse,
 )
 from app.work.service import WorkService
 
@@ -84,6 +85,16 @@ async def update_task(
     return await WorkService(db).update_task(workspace_id, task_id, body, current_user)
 
 
+@router.delete("/workspaces/{workspace_id}/tasks/{task_id}", status_code=204)
+async def delete_task(
+    workspace_id: uuid.UUID,
+    task_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await WorkService(db).delete_task(workspace_id, task_id, current_user)
+
+
 # ---- Comments ----
 
 @router.post(
@@ -112,3 +123,17 @@ async def get_comments(
     db: AsyncSession = Depends(get_db),
 ):
     return await WorkService(db).get_comments(workspace_id, task_id, current_user)
+
+# ---- Activities ----
+
+@router.get(
+    "/workspaces/{workspace_id}/tasks/{task_id}/activities",
+    response_model=list[ActivityResponse],
+)
+async def get_activities(
+    workspace_id: uuid.UUID,
+    task_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await WorkService(db).get_activities(workspace_id, task_id, current_user)

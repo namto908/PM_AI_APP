@@ -58,6 +58,16 @@ export interface TaskComment {
   created_at: string;
 }
 
+export interface TaskActivity {
+  id: string;
+  task_id: string;
+  user_id: string | null;
+  action: string;
+  old_value: Record<string, string> | null;
+  new_value: Record<string, string> | null;
+  created_at: string;
+}
+
 export const tasksApi = {
   list: (workspaceId: string, filters: TaskFilter = {}) =>
     client.get<PaginatedTasks>(`/workspaces/${workspaceId}/tasks`, { params: filters }),
@@ -71,9 +81,15 @@ export const tasksApi = {
   update: (workspaceId: string, taskId: string, data: TaskUpdate) =>
     client.patch<Task>(`/workspaces/${workspaceId}/tasks/${taskId}`, data),
 
+  delete: (workspaceId: string, taskId: string) =>
+    client.delete(`/workspaces/${workspaceId}/tasks/${taskId}`),
+
   addComment: (workspaceId: string, taskId: string, content: string) =>
     client.post(`/workspaces/${workspaceId}/tasks/${taskId}/comments`, { content }),
 
   getComments: (workspaceId: string, taskId: string) =>
     client.get<TaskComment[]>(`/workspaces/${workspaceId}/tasks/${taskId}/comments`),
+
+  getActivities: (workspaceId: string, taskId: string) =>
+    client.get<TaskActivity[]>(`/workspaces/${workspaceId}/tasks/${taskId}/activities`),
 };

@@ -96,6 +96,18 @@ class CommentResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ActivityResponse(BaseModel):
+    id: uuid.UUID
+    task_id: uuid.UUID
+    user_id: Optional[uuid.UUID]
+    action: str
+    old_value: Optional[dict] = None
+    new_value: Optional[dict] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class TaskFilter(BaseModel):
     status: Optional[str] = None
     priority: Optional[str] = None

@@ -14,6 +14,7 @@ from app.work.schemas import (
     TaskResponse,
     CommentCreate,
     CommentResponse,
+    ActivityResponse,
     PaginatedTasks,
 )
 
@@ -125,6 +126,14 @@ class WorkService:
         )
         return updated
 
+    async def delete_task(
+        self, workspace_id: uuid.UUID, task_id: uuid.UUID, current_user: dict
+    ) -> None:
+        task = await self.repo.get_task(workspace_id, task_id)
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        await self.repo.delete_task(task)
+
     # ---- Comments ----
 
     async def add_comment(
@@ -152,3 +161,16 @@ class WorkService:
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
         return await self.repo.get_comments(task_id)
+
+    # ---- Activity ----
+
+    async def get_activities(
+        self,
+        workspace_id: uuid.UUID,
+        task_id: uuid.UUID,
+        current_user: dict,
+    ) -> list[ActivityResponse]:
+        task = await self.repo.get_task(workspace_id, task_id)
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        return await self.repo.get_activities(task_id)

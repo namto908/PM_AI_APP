@@ -80,6 +80,10 @@ class WorkRepository:
         await self.db.refresh(task)
         return task
 
+    async def delete_task(self, task: Task) -> None:
+        await self.db.delete(task)
+        await self.db.commit()
+
     # ---- Comments ----
 
     async def get_comments(self, task_id: uuid.UUID) -> list[TaskComment]:
@@ -101,3 +105,11 @@ class WorkRepository:
     async def create_activity(self, activity: TaskActivity) -> None:
         self.db.add(activity)
         await self.db.commit()
+
+    async def get_activities(self, task_id: uuid.UUID) -> list[TaskActivity]:
+        result = await self.db.execute(
+            select(TaskActivity)
+            .where(TaskActivity.task_id == task_id)
+            .order_by(TaskActivity.created_at.desc())
+        )
+        return list(result.scalars().all())

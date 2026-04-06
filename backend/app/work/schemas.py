@@ -55,6 +55,7 @@ class TaskUpdate(BaseModel):
     assignee_id: Optional[uuid.UUID] = None
     due_date: Optional[date] = None
     tags: Optional[List[str]] = None
+    parent_id: Optional[uuid.UUID] = None
 
     @field_validator("status")
     @classmethod
@@ -113,6 +114,8 @@ class TaskFilter(BaseModel):
     priority: Optional[str] = None
     assignee_id: Optional[uuid.UUID] = None
     project_id: Optional[uuid.UUID] = None
+    parent_id: Optional[uuid.UUID] = None
+    top_level_only: bool = False
     page: int = 1
     page_size: int = 20
 

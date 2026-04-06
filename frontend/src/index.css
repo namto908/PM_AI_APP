@@ -38,6 +38,13 @@
   --color-input:   rgb(var(--input-rgb) / <alpha-value>);
   --color-input2:  rgb(var(--input2-rgb) / <alpha-value>);
   --color-text1:   rgb(var(--text1-rgb) / <alpha-value>);
+
+  /* Accent colors */
+  --color-primary: #6bd8cb;
+  --color-secondary: #b4c5ff;
+  --color-tertiary: #ffb59a;
+  --color-error: #ffb4ab;
+  --color-on-primary-fixed: #00201d;
 }
 
 :root {
@@ -146,4 +153,28 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* Custom Animations */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(107, 216, 203, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 216, 203, 0.4);
 }

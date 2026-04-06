@@ -49,6 +49,7 @@ async def create_task(
 async def update_task_status(
     db: AsyncSession,
     workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
     task_id: str,
     status: str,
 ) -> dict:
@@ -56,7 +57,7 @@ async def update_task_status(
     from app.work.service import WorkService
     from app.work.schemas import TaskUpdate
 
-    fake_user = {"user_id": str(uuid.uuid4())}
+    fake_user = {"user_id": str(user_id)}
     body = TaskUpdate(status=status)
     task = await WorkService(db).update_task(workspace_id, uuid.UUID(task_id), body, fake_user)
     return {"task_id": task_id, "status": task.status, "updated": True}
@@ -65,6 +66,7 @@ async def update_task_status(
 async def assign_task(
     db: AsyncSession,
     workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
     task_id: str,
     assignee_id: str,
 ) -> dict:
@@ -72,7 +74,7 @@ async def assign_task(
     from app.work.service import WorkService
     from app.work.schemas import TaskUpdate
 
-    fake_user = {"user_id": str(uuid.uuid4())}
+    fake_user = {"user_id": str(user_id)}
     body = TaskUpdate(assignee_id=uuid.UUID(assignee_id))
     task = await WorkService(db).update_task(workspace_id, uuid.UUID(task_id), body, fake_user)
     return {"task_id": task_id, "assignee_id": assignee_id, "assigned": True}

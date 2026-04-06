@@ -20,9 +20,9 @@ export function useTasks(workspaceId: string | null, filters: TaskFilter = {}) {
   }, [workspaceId, filterKey]);
 
   const refetch = () => {
-    if (!workspaceId) return;
+    if (!workspaceId) return Promise.resolve();
     setLoading(true);
-    tasksApi
+    return tasksApi
       .list(workspaceId, filters)
       .then((res) => setData(res.data))
       .catch((err) => setError(err.response?.data?.detail || 'Failed to load tasks'))

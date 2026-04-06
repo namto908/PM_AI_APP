@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # Planner / Reasoning models
     ACTIVE_PLANNER: str = "none"          # "gemma" | "grok" | "none"
-    PLANNER_MODEL: str = "gemma-3-27b-it"  # Google AI model name for Gemma planner
+    PLANNER_MODEL: str = "gemma-4-31b-it"  # Google AI model name for Gemma planner
     XAI_API_KEY: str = ""                  # xAI API key for Grok
     XAI_MODEL: str = "grok-4-1-fast-reasoning"  # xAI model name
 

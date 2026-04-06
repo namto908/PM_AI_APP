@@ -122,7 +122,9 @@ class AgentOrchestrator:
 
         # Handle confirmed write action continuation
         if user_confirmed and pending_tool:
-            async for chunk in self._execute_confirmed_write(conv.id, pending_tool):
+            # pending_tool can be a single dict or a list of dicts
+            tools_to_exec = pending_tool if isinstance(pending_tool, list) else [pending_tool]
+            async for chunk in self._execute_confirmed_write(conv.id, tools_to_exec):
                 yield chunk
             return
 
@@ -187,6 +189,8 @@ class AgentOrchestrator:
             })
 
             # Process each tool call
+            write_tools_to_confirm = []
+            
             for tc in assistant_message.tool_calls:
                 tool_name = tc.function.name
                 try:
@@ -203,24 +207,12 @@ class AgentOrchestrator:
                     })
                     continue
 
-                # Safety: check write tools
-                if self.safety.needs_confirmation(tool_name, {}):
-                    confirm_msg = self.safety.build_confirmation_message(tool_name, args)
-                    await self._save_message(
-                        conv.id, "assistant", confirm_msg,
-                        tool_name=tool_name,
-                        tool_calls={"name": tool_name, "args": args, "awaiting_confirm": True},
-                    )
-                    yield self._sse(confirm_msg)
-                    yield self._sse_meta({
-                        "conversation_id": str(conv.id),
-                        "awaiting_confirm": True,
-                        "pending_tool": {"name": tool_name, "args": args},
-                        "done": True,
-                    })
-                    return
+                # Safety check: collect write tools for confirmation
+                if self.safety.is_write_tool(tool_name):
+                    write_tools_to_confirm.append({"id": tc.id, "name": tool_name, "args": args})
+                    continue
 
-                # Execute read tool
+                # Execute read tool immediately
                 try:
                     result = await tool_def.handler(**args)
                     result_str = json.dumps(result, ensure_ascii=False)
@@ -240,28 +232,59 @@ class AgentOrchestrator:
                         "content": json.dumps({"error": str(e)}),
                     })
 
+            # If there are write tools, pause and ask for confirmation for ALL of them
+            if write_tools_to_confirm:
+                confirm_msg = self.safety.build_batch_confirmation_message(write_tools_to_confirm)
+                await self._save_message(
+                    conv.id, "assistant", confirm_msg,
+                    # We store the list of tools in tool_calls for history context if needed
+                    tool_calls={"batch": write_tools_to_confirm, "awaiting_confirm": True},
+                )
+                yield self._sse(confirm_msg)
+                yield self._sse_meta({
+                    "conversation_id": str(conv.id),
+                    "awaiting_confirm": True,
+                    "pending_tool": write_tools_to_confirm, # Sending the full list
+                    "done": True,
+                })
+                return
+
         yield self._sse("Đã đạt giới hạn vòng lặp tool. Vui lòng thử lại.")
 
     async def _execute_confirmed_write(
-        self, conversation_id: uuid.UUID, pending_tool: dict
+        self, conversation_id: uuid.UUID, tools_to_exec: list[dict]
     ) -> AsyncGenerator[str, None]:
         registry = build_registry_with_write_tools(self.db, self.workspace_id, self.user_id)
-        tool_def = registry.get(pending_tool["name"])
-        if not tool_def:
-            yield self._sse("Không tìm thấy tool để thực thi.")
-            return
-        try:
-            result = await tool_def.handler(**pending_tool.get("args", {}))
-            result_str = json.dumps(result, ensure_ascii=False)
-            await self._save_message(
-                conversation_id, "tool", result_str, tool_name=pending_tool["name"]
-            )
-            summary = f"Đã thực hiện thành công: `{pending_tool['name']}`\n```json\n{result_str}\n```"
-            await self._save_message(conversation_id, "assistant", summary)
-            yield self._sse(summary)
-            yield self._sse_meta({"conversation_id": str(conversation_id), "done": True})
-        except Exception as e:
-            yield self._sse(f"Lỗi khi thực thi: {str(e)}")
+        results = []
+        
+        for tool_info in tools_to_exec:
+            name = tool_info["name"]
+            args = tool_info.get("args", {})
+            tool_def = registry.get(name)
+            
+            if not tool_def:
+                results.append({"tool": name, "error": "Tool not found"})
+                continue
+                
+            try:
+                result = await tool_def.handler(**args)
+                results.append({"tool": name, "args": args, "result": result, "success": True})
+                # Save each tool result to history
+                await self._save_message(
+                    conversation_id, "tool", json.dumps(result, ensure_ascii=False), tool_name=name
+                )
+            except Exception as e:
+                results.append({"tool": name, "args": args, "error": str(e), "success": False})
+
+        # Summary message
+        summary = "Đã hoàn thành các hành động:\n"
+        for i, r in enumerate(results, 1):
+            status = "✅ Thành công" if r.get("success") else f"❌ Lỗi: {r.get('error')}"
+            summary += f"{i}. `{r['tool']}`: {status}\n"
+        
+        await self._save_message(conversation_id, "assistant", summary)
+        yield self._sse(summary)
+        yield self._sse_meta({"conversation_id": str(conversation_id), "done": True})
 
     def _sse(self, text: str) -> str:
         return f"data: {json.dumps({'type': 'text', 'content': text}, ensure_ascii=False)}\n\n"

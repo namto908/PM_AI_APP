@@ -23,3 +23,26 @@ class SafetyLayer:
         }
         action_desc = descriptions.get(tool_name, tool_name)
         return f"Xác nhận: {action_desc}? Trả lời **yes** để thực hiện hoặc **no** để huỷ."
+
+    def build_batch_confirmation_message(self, tool_calls: list[dict]) -> str:
+        """Create a summary of multiple actions for user confirmation."""
+        if not tool_calls:
+            return "Không có hành động nào để xác nhận."
+        if len(tool_calls) == 1:
+            return self.build_confirmation_message(tool_calls[0]["name"], tool_calls[0]["args"])
+
+        msg = "Xác nhận thực hiện các hành động sau:\n"
+        descriptions = {
+            "create_task": lambda a: f"Tạo task: **{a.get('title', '?')}**",
+            "update_task_status": lambda a: f"Cập nhật task `{a.get('task_id', '?')}` → `{a.get('status', '?')}`",
+            "assign_task": lambda a: f"Gán task `{a.get('task_id', '?')}` cho user `{a.get('assignee_id', '?')}`",
+            "add_task_comment": lambda a: f"Thêm comment vào task `{a.get('task_id', '?')}`",
+        }
+        for i, tc in enumerate(tool_calls, 1):
+            name = tc["name"]
+            args = tc["args"]
+            desc_fn = descriptions.get(name, lambda a: name)
+            msg += f"{i}. {desc_fn(args)}\n"
+        
+        msg += "\nTrả lời **yes** để thực hiện tất cả hoặc **no** để huỷ."
+        return msg

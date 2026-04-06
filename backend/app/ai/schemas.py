@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Any
+from typing import Optional, Any, Union
 import uuid
 from datetime import datetime
 
@@ -12,7 +12,7 @@ class PendingTool(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     conversation_id: Optional[uuid.UUID] = None
-    pending_tool: Optional[PendingTool] = None
+    pending_tool: Optional[Union[PendingTool, list[PendingTool]]] = None
 
 
 class ConversationResponse(BaseModel):

@@ -97,6 +97,17 @@ class WorkService:
                 new_value={"title": body.title},
             )
         )
+        
+        if body.parent_id:
+            await self.repo.create_activity(
+                TaskActivity(
+                    task_id=body.parent_id,
+                    user_id=user_id,
+                    action="subtask_added",
+                    new_value={"subtask_id": str(created.id), "title": body.title},
+                )
+            )
+            
         return created
 
     async def update_task(

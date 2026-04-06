@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB, INET
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import Numeric, TIMESTAMP
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from app.common.database import Base
 
 
@@ -21,7 +21,7 @@ class Server(Base):
     agent_token: Mapped[str | None] = mapped_column(Text, unique=True, index=True)
     tags: Mapped[list] = mapped_column(ARRAY(String), default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
 class Service(Base):
@@ -37,7 +37,7 @@ class Service(Base):
     check_target: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(20), default="unknown")
     last_checked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
 class ServerMetric(Base):
@@ -84,7 +84,7 @@ class Alert(Base):
     resolved_by: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL")
     )
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
 class AlertRule(Base):
@@ -106,4 +106,4 @@ class AlertRule(Base):
     duration_min: Mapped[int] = mapped_column(Integer, default=5)
     severity: Mapped[str] = mapped_column(String(10), default="warning")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

@@ -27,6 +27,8 @@ export interface TaskFilter {
   status?: string;
   priority?: string;
   project_id?: string;
+  parent_id?: string;
+  top_level_only?: boolean;
   page?: number;
   page_size?: number;
 }
@@ -35,6 +37,7 @@ export interface TaskCreate {
   title: string;
   description?: string;
   project_id?: string;
+  parent_id?: string;
   priority?: string;
   assignee_id?: string;
   due_date?: string;

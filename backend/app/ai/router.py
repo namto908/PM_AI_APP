@@ -46,8 +46,13 @@ async def chat(
     message_lower = body.message.strip().lower()
     user_confirmed = message_lower in ("yes", "có", "xác nhận", "ok", "đồng ý")
 
-    # Convert pending_tool Pydantic model → plain dict for orchestrator
-    pending_tool = body.pending_tool.model_dump() if body.pending_tool else None
+    # Extract pending_tool(s) from body
+    pending_tool = None
+    if body.pending_tool:
+        if isinstance(body.pending_tool, list):
+            pending_tool = [t.model_dump() for t in body.pending_tool]
+        else:
+            pending_tool = body.pending_tool.model_dump()
 
     async def event_stream():
         try:

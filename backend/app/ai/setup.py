@@ -39,12 +39,24 @@ def build_registry(db: AsyncSession, workspace_id: uuid.UUID) -> ToolRegistry:
 
     registry.register(ToolDefinition(
         name="get_task_summary",
-        description="Tóm tắt tổng quan trạng thái task trong workspace: đếm open, urgent, overdue, in_progress.",
+        description="Tóm tắt tổng quan trạng thái task trong workspace: đếm open, urgent, overdue, in_progress, và số lượng task trong thùng rác.",
         parameters={
             "type": "object",
             "properties": {},
         },
         handler=lambda **kwargs: task_tools.get_task_summary(db, workspace_id),
+    ))
+
+    registry.register(ToolDefinition(
+        name="list_deleted_tasks",
+        description="Liệt kê danh sách các task đã bị xóa hoặc hủy (nằm trong Thùng rác/Archive).",
+        parameters={
+            "type": "object",
+            "properties": {
+                "limit": {"type": "integer", "description": "Số lượng task tối đa (1-100)"},
+            },
+        },
+        handler=lambda **kwargs: task_tools.list_deleted_tasks(db, workspace_id, **kwargs),
     ))
 
     # ---- Read tools: Monitoring ----
@@ -56,6 +68,19 @@ def build_registry(db: AsyncSession, workspace_id: uuid.UUID) -> ToolRegistry:
             "properties": {},
         },
         handler=lambda **kwargs: monitoring_tools.list_servers(db, workspace_id),
+    ))
+
+    registry.register(ToolDefinition(
+        name="get_service_status",
+        description="Lấy trạng thái hiện tại của một service (status, up/down, metric cơ bản) trên một server cụ thể.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "service_id": {"type": "string", "description": "UUID của service"},
+            },
+            "required": ["service_id"],
+        },
+        handler=lambda **kwargs: monitoring_tools.get_service_status(db, workspace_id, **kwargs),
     ))
 
     registry.register(ToolDefinition(
@@ -137,7 +162,7 @@ def build_registry_with_write_tools(
             },
             "required": ["task_id", "status"],
         },
-        handler=lambda **kwargs: write_tools.update_task_status(db, workspace_id, **kwargs),
+        handler=lambda **kwargs: write_tools.update_task_status(db, workspace_id, user_id, **kwargs),
         requires_confirm=True,
     ))
 
@@ -152,7 +177,7 @@ def build_registry_with_write_tools(
             },
             "required": ["task_id", "assignee_id"],
         },
-        handler=lambda **kwargs: write_tools.assign_task(db, workspace_id, **kwargs),
+        handler=lambda **kwargs: write_tools.assign_task(db, workspace_id, user_id, **kwargs),
         requires_confirm=True,
     ))
 

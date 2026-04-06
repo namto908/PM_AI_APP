@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from passlib.context import CryptContext
 from jose import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import uuid
 
 from app.auth.models import User, Workspace, WorkspaceMember
@@ -27,7 +27,7 @@ def _verify_password(plain: str, hashed: str) -> bool:
 
 def _create_token(payload: dict) -> str:
     data = payload.copy()
-    data["exp"] = datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+    data["exp"] = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
     return jwt.encode(data, settings.JWT_SECRET, algorithm="HS256")
 
 

@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from datetime import datetime, date
 import uuid
 
-from app.work.models import Task
+from app.work.models import Task, DeletedTask
 
 
 async def list_tasks(
@@ -82,19 +82,63 @@ async def get_task_summary(db: AsyncSession, workspace_id: uuid.UUID) -> dict:
         r = await db.execute(q)
         return r.scalar_one()
 
-    total_open = await count_where(Task.status.notin_(["done", "cancelled"]))
-    urgent = await count_where(Task.priority == "urgent", Task.status.notin_(["done", "cancelled"]))
+    total_all = await count_where()
+    top_level = await count_where(Task.parent_id.is_(None))
+    subtasks = await count_where(Task.parent_id.is_not(None))
+    
+    total_open = await count_where(Task.status.notin_(["done"])) # Cancelled are already archived
+    top_level_open = await count_where(Task.parent_id.is_(None), Task.status.notin_(["done"]))
+    urgent = await count_where(Task.priority == "urgent", Task.status.notin_(["done"]))
     overdue = await count_where(
         Task.due_date < today,
-        Task.status.notin_(["done", "cancelled"]),
+        Task.status.notin_(["done"]),
     )
     in_progress = await count_where(Task.status == "in_progress")
+    done_count = await count_where(Task.status == "done")
     done_today = await count_where(Task.status == "done", Task.updated_at >= datetime.combine(today, datetime.min.time()))
 
+    # Archived stats
+    q_archived = select(func.count()).select_from(DeletedTask).where(DeletedTask.workspace_id == workspace_id)
+    total_archived = (await db.execute(q_archived)).scalar_one()
+
     return {
+        "total_active_tasks": total_all,
+        "top_level_tasks": top_level,
+        "subtasks": subtasks,
         "total_open": total_open,
+        "top_level_open": top_level_open,
         "urgent": urgent,
         "overdue": overdue,
         "in_progress": in_progress,
+        "total_done": done_count,
         "done_today": done_today,
+        "total_archived": total_archived,
+    }
+
+
+async def list_deleted_tasks(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    limit: int = 20,
+) -> dict:
+    """Return list of archived tasks (Trash)."""
+    query = select(DeletedTask).where(DeletedTask.workspace_id == workspace_id)
+    query = query.order_by(DeletedTask.deleted_at.desc()).limit(limit)
+
+    result = await db.execute(query)
+    tasks = result.scalars().all()
+    return {
+        "tasks": [
+            {
+                "id": str(t.id),
+                "title": t.title,
+                "status": t.status,
+                "priority": t.priority,
+                "archive_reason": t.archive_reason,
+                "deleted_at": t.deleted_at.isoformat() if t.deleted_at else None,
+                "original_created_at": t.created_at.isoformat() if t.created_at else None,
+            }
+            for t in tasks
+        ],
+        "total": len(tasks),
     }

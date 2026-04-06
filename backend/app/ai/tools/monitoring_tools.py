@@ -60,11 +60,11 @@ async def get_server_metrics(
     """Return recent metrics snapshot for a server."""
     from app.ops.models import Server, ServerMetric
     from sqlalchemy import select, text
-    from datetime import datetime, timedelta
+    from datetime import datetime, timezone, timedelta
 
     ranges = {"1h": 1, "6h": 6, "24h": 24, "7d": 168}
     hours = ranges.get(time_range, 1)
-    since = datetime.utcnow() - timedelta(hours=hours)
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=hours)
 
     srv_result = await db.execute(
         select(Server).where(

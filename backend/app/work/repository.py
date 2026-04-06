@@ -2,9 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
-from app.work.models import Project, Task, TaskComment, TaskActivity
+from app.work.models import Project, Task, TaskComment, TaskActivity, DeletedTask
 from app.work.schemas import TaskFilter
 
 
@@ -49,6 +49,10 @@ class WorkRepository:
             query = query.where(Task.assignee_id == filters.assignee_id)
         if filters.project_id:
             query = query.where(Task.project_id == filters.project_id)
+        if filters.top_level_only:
+            query = query.where(Task.parent_id.is_(None))
+        if filters.parent_id:
+            query = query.where(Task.parent_id == filters.parent_id)
 
         count_result = await self.db.execute(select(func.count()).select_from(query.subquery()))
         total = count_result.scalar_one()
@@ -73,15 +77,54 @@ class WorkRepository:
         return task
 
     async def update_task(self, task: Task, updates: dict) -> Task:
+        new_status = updates.get("status")
+        if new_status == "cancelled":
+            await self._archive_task_recursive(task, reason="cancelled")
+            await self.db.commit()
+            return task # Returns the task which is now deleted from session/DB, but metadata is in DeletedTask
+
         for key, value in updates.items():
             setattr(task, key, value)
-        task.updated_at = datetime.utcnow()
+        task.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await self.db.commit()
         await self.db.refresh(task)
         return task
 
-    async def delete_task(self, task: Task) -> None:
+    async def _archive_task_recursive(self, task: Task, reason: str) -> None:
+        """Helper to recursively move a task and its subtasks to DeletedTask."""
+        # 1. Archive the task itself
+        archive = DeletedTask(
+            id=task.id,
+            workspace_id=task.workspace_id,
+            project_id=task.project_id,
+            parent_id=task.parent_id,
+            title=task.title,
+            description=task.description,
+            status=task.status,
+            priority=task.priority,
+            assignee_id=task.assignee_id,
+            created_by=task.created_by,
+            due_date=task.due_date,
+            position=task.position,
+            tags=task.tags,
+            metadata_=task.metadata_,
+            created_at=task.created_at,
+            updated_at=task.updated_at,
+            archive_reason=reason
+        )
+        self.db.add(archive)
+        
+        # 2. Archive subtasks
+        result = await self.db.execute(select(Task).where(Task.parent_id == task.id))
+        subtasks = result.scalars().all()
+        for subtask in subtasks:
+            await self._archive_task_recursive(subtask, reason)
+            
+        # 3. Delete from main table
         await self.db.delete(task)
+
+    async def delete_task(self, task: Task) -> None:
+        await self._archive_task_recursive(task, reason="deleted")
         await self.db.commit()
 
     # ---- Comments ----

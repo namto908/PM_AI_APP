@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Header, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import secrets
 
@@ -99,7 +99,7 @@ class OpsService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid agent token")
 
         metric = ServerMetric(
-            time=datetime.utcnow(),
+            time=datetime.now(timezone.utc).replace(tzinfo=None),
             server_id=server.id,
             cpu_percent=body.cpu_percent,
             ram_percent=body.ram_percent,
@@ -189,7 +189,7 @@ class OpsService:
         if not alert:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
         alert.resolved = True
-        alert.resolved_at = datetime.utcnow()
+        alert.resolved_at = datetime.now(timezone.utc).replace(tzinfo=None)
         alert.resolved_by = uuid.UUID(current_user["user_id"])
         await self.db.commit()
         await self.db.refresh(alert)

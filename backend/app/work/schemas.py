@@ -60,7 +60,7 @@ class TaskUpdate(BaseModel):
     @field_validator("status")
     @classmethod
     def valid_status(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in ("todo", "in_progress", "in_review", "done", "cancelled"):
+        if v is not None and v not in ("todo", "in_progress", "in_review", "done"):
             raise ValueError("Invalid status value")
         return v
 
@@ -77,6 +77,7 @@ class TaskResponse(BaseModel):
     assignee_id: Optional[uuid.UUID]
     due_date: Optional[date]
     tags: List[str]
+    is_deleted: bool
     created_at: datetime
     updated_at: datetime
 
@@ -116,6 +117,7 @@ class TaskFilter(BaseModel):
     project_id: Optional[uuid.UUID] = None
     parent_id: Optional[uuid.UUID] = None
     top_level_only: bool = False
+    include_deleted: bool = False
     page: int = 1
     page_size: int = 20
 

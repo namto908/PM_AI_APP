@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 import uuid
 from datetime import date, datetime
 
-from app.work.models import Task, DeletedTask
+from app.work.models import Task
 
 
 async def count_model(db, model, workspace_id, *conditions):
@@ -17,7 +17,7 @@ async def count_tasks(db, workspace_id, *conditions):
 
 
 async def count_archived(db, workspace_id, *conditions):
-    return await count_model(db, DeletedTask, workspace_id, *conditions)
+    return await count_model(db, Task, workspace_id, Task.is_deleted == True, *conditions)
 
 
 class ContextBuilder:
@@ -37,22 +37,26 @@ class ContextBuilder:
         top_level_open = await count_tasks(
             self.db, workspace_id,
             Task.parent_id.is_(None),
-            Task.status.notin_(["done", "cancelled"])
+            Task.status.notin_(["done"]),
+            Task.is_deleted == False
         )
         
         urgent = await count_tasks(
             self.db, workspace_id,
             Task.priority == "urgent",
-            Task.status.notin_(["done", "cancelled"]),
+            Task.status.notin_(["done"]),
+            Task.is_deleted == False,
         )
         overdue = await count_tasks(
             self.db, workspace_id,
             Task.due_date < today,
-            Task.status.notin_(["done", "cancelled"]),
+            Task.status.notin_(["done"]),
+            Task.is_deleted == False,
         )
         in_progress = await count_tasks(
             self.db, workspace_id,
             Task.status == "in_progress",
+            Task.is_deleted == False,
         )
 
         # Try to load ops data
@@ -88,7 +92,7 @@ class ContextBuilder:
         lines.append(f"Tasks Stats: {top_level_open} task chính đang mở (Tổng {total_tasks} task trong DB: {top_level} chính, {subtasks} con). Đang có {total_archived} task trong Thùng rác (Trash/Archived).")
         lines.append(f"Tasks Detail: {in_progress} đang xử lý, {urgent} urgent, {overdue} quá hạn")
         lines.append("Lưu ý: Luôn báo cáo số lượng 'task chính đang mở' trước tiên để khớp với giao diện của user.")
-        lines.append("Lưu ý: Task 'Open' là các task có trạng thái todo, in_progress, hoặc in_review. Task 'Done' là hoàn thành. Task 'Cancelled' hoặc 'Deleted' đều đã được dời vào Thùng rác (archive).")
+        lines.append("Lưu ý: Task 'Open' là các task có trạng thái todo, in_progress, hoặc in_review. Task 'Done' là hoàn thành. Task đã xóa đều nằm trong Thùng rác.")
         if open_alerts:
             lines.append(f"Alert đang mở: {open_alerts}")
         if degraded_services:

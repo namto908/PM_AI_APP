@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from datetime import datetime, date
 import uuid
 
-from app.work.models import Task, DeletedTask
+from app.work.models import Task
 
 
 async def list_tasks(
@@ -16,7 +16,7 @@ async def list_tasks(
     limit: int = 20,
 ) -> dict:
     """Return filtered task list for the workspace."""
-    query = select(Task).where(Task.workspace_id == workspace_id)
+    query = select(Task).where(Task.workspace_id == workspace_id, Task.is_deleted == False)
     if status:
         query = query.where(Task.status == status)
     if priority:
@@ -53,7 +53,7 @@ async def get_task_detail(
 ) -> dict:
     """Return full detail of a single task."""
     result = await db.execute(
-        select(Task).where(Task.id == uuid.UUID(task_id), Task.workspace_id == workspace_id)
+        select(Task).where(Task.id == uuid.UUID(task_id), Task.workspace_id == workspace_id, Task.is_deleted == False)
     )
     task = result.scalar_one_or_none()
     if not task:
@@ -82,27 +82,27 @@ async def get_task_summary(db: AsyncSession, workspace_id: uuid.UUID) -> dict:
         r = await db.execute(q)
         return r.scalar_one()
 
-    total_all = await count_where()
-    top_level = await count_where(Task.parent_id.is_(None))
-    subtasks = await count_where(Task.parent_id.is_not(None))
+    total_active = await count_where(Task.is_deleted == False)
+    top_level = await count_where(Task.parent_id.is_(None), Task.is_deleted == False)
+    subtasks = await count_where(Task.parent_id.is_not(None), Task.is_deleted == False)
     
-    total_open = await count_where(Task.status.notin_(["done"])) # Cancelled are already archived
-    top_level_open = await count_where(Task.parent_id.is_(None), Task.status.notin_(["done"]))
-    urgent = await count_where(Task.priority == "urgent", Task.status.notin_(["done"]))
+    total_open = await count_where(Task.status.notin_(["done"]), Task.is_deleted == False)
+    top_level_open = await count_where(Task.parent_id.is_(None), Task.status.notin_(["done"]), Task.is_deleted == False)
+    urgent = await count_where(Task.priority == "urgent", Task.status.notin_(["done"]), Task.is_deleted == False)
     overdue = await count_where(
         Task.due_date < today,
         Task.status.notin_(["done"]),
+        Task.is_deleted == False,
     )
-    in_progress = await count_where(Task.status == "in_progress")
-    done_count = await count_where(Task.status == "done")
-    done_today = await count_where(Task.status == "done", Task.updated_at >= datetime.combine(today, datetime.min.time()))
+    in_progress = await count_where(Task.status == "in_progress", Task.is_deleted == False)
+    done_count = await count_where(Task.status == "done", Task.is_deleted == False)
+    done_today = await count_where(Task.status == "done", Task.updated_at >= datetime.combine(today, datetime.min.time()), Task.is_deleted == False)
 
-    # Archived stats
-    q_archived = select(func.count()).select_from(DeletedTask).where(DeletedTask.workspace_id == workspace_id)
-    total_archived = (await db.execute(q_archived)).scalar_one()
+    # Archived stats (soft-deleted)
+    total_archived = await count_where(Task.is_deleted == True)
 
     return {
-        "total_active_tasks": total_all,
+        "total_active_tasks": total_active,
         "top_level_tasks": top_level,
         "subtasks": subtasks,
         "total_open": total_open,
@@ -121,9 +121,9 @@ async def list_deleted_tasks(
     workspace_id: uuid.UUID,
     limit: int = 20,
 ) -> dict:
-    """Return list of archived tasks (Trash)."""
-    query = select(DeletedTask).where(DeletedTask.workspace_id == workspace_id)
-    query = query.order_by(DeletedTask.deleted_at.desc()).limit(limit)
+    """Return list of soft-deleted tasks (Trash)."""
+    query = select(Task).where(Task.workspace_id == workspace_id, Task.is_deleted == True)
+    query = query.order_by(Task.updated_at.desc()).limit(limit)
 
     result = await db.execute(query)
     tasks = result.scalars().all()
@@ -134,8 +134,7 @@ async def list_deleted_tasks(
                 "title": t.title,
                 "status": t.status,
                 "priority": t.priority,
-                "archive_reason": t.archive_reason,
-                "deleted_at": t.deleted_at.isoformat() if t.deleted_at else None,
+                "deleted_at": t.updated_at.isoformat() if t.updated_at else None,
                 "original_created_at": t.created_at.isoformat() if t.created_at else None,
             }
             for t in tasks

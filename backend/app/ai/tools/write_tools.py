@@ -100,3 +100,57 @@ async def add_task_comment(
         "content": comment.content,
         "created": True,
     }
+
+async def update_task(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+    task_id: str,
+    title: str | None = None,
+    description: str | None = None,
+    priority: str | None = None,
+    due_date: str | None = None,
+    assignee_id: str | None = None,
+) -> dict:
+    """Update general task fields. Only call after user confirmation."""
+    from app.work.service import WorkService
+    from app.work.schemas import TaskUpdate
+
+    updates = {}
+    if title is not None:
+        updates["title"] = title
+    if description is not None:
+        updates["description"] = description
+    if priority is not None:
+        updates["priority"] = priority
+    if due_date is not None:
+        updates["due_date"] = date.fromisoformat(due_date) if due_date else None
+    if assignee_id is not None:
+        updates["assignee_id"] = uuid.UUID(assignee_id) if assignee_id else None
+
+    if not updates:
+        return {"task_id": task_id, "updated": False, "message": "No fields provided for update"}
+
+    fake_user = {"user_id": str(user_id)}
+    body = TaskUpdate(**updates)
+    task = await WorkService(db).update_task(workspace_id, uuid.UUID(task_id), body, fake_user)
+    
+    return {
+        "task_id": str(task.id),
+        "updated_fields": list(updates.keys()),
+        "updated": True
+    }
+
+
+async def delete_task(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+    task_id: str,
+) -> dict:
+    """Delete a task (mark as deleted). Only call after user confirmation."""
+    from app.work.service import WorkService
+
+    fake_user = {"user_id": str(user_id)}
+    await WorkService(db).delete_task(workspace_id, uuid.UUID(task_id), fake_user)
+    return {"task_id": task_id, "deleted": True}

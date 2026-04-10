@@ -166,7 +166,7 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
   };
 
   const statusLabel: Record<string, string> = {
-    todo: 'To Do', in_progress: 'In Progress', in_review: 'In Review', done: 'Done', cancelled: 'Cancelled',
+    todo: 'To Do', in_progress: 'In Progress', in_review: 'In Review', done: 'Done',
   };
 
   const completedSubtasksCount = subtasks.filter(st => st.status === 'done').length;

@@ -59,6 +59,7 @@ class Task(Base):
     position: Mapped[int] = mapped_column(Integer, default=0)
     tags: Mapped[list] = mapped_column(ARRAY(String), default=list)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
+    is_deleted: Mapped[bool] = mapped_column(default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     updated_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
@@ -93,24 +94,3 @@ class TaskActivity(Base):
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
-class DeletedTask(Base):
-    __tablename__ = "deleted_tasks"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), index=True)
-    project_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
-    parent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
-    title: Mapped[str] = mapped_column(String(500), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(20))
-    priority: Mapped[str] = mapped_column(String(10))
-    assignee_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
-    created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
-    due_date: Mapped[date | None] = mapped_column(Date)
-    position: Mapped[int] = mapped_column(Integer)
-    tags: Mapped[list] = mapped_column(ARRAY(String))
-    metadata_: Mapped[dict] = mapped_column("metadata", JSONB)
-    created_at: Mapped[datetime] = mapped_column()
-    updated_at: Mapped[datetime] = mapped_column()
-    deleted_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
-    archive_reason: Mapped[str | None] = mapped_column(String(20), nullable=True)

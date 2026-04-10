@@ -14,7 +14,7 @@ def build_registry(db: AsyncSession, workspace_id: uuid.UUID) -> ToolRegistry:
         parameters={
             "type": "object",
             "properties": {
-                "status": {"type": "string", "enum": ["todo", "in_progress", "in_review", "done", "cancelled"], "description": "Filter by task status"},
+                "status": {"type": "string", "enum": ["todo", "in_progress", "in_review", "done"], "description": "Filter by task status"},
                 "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"], "description": "Filter by priority"},
                 "assignee_id": {"type": "string", "description": "Filter by assignee UUID"},
                 "project_id": {"type": "string", "description": "Filter by project UUID"},
@@ -49,7 +49,7 @@ def build_registry(db: AsyncSession, workspace_id: uuid.UUID) -> ToolRegistry:
 
     registry.register(ToolDefinition(
         name="list_deleted_tasks",
-        description="Liệt kê danh sách các task đã bị xóa hoặc hủy (nằm trong Thùng rác/Archive).",
+        description="Liệt kê danh sách các task đã bị xóa (nằm trong Thùng rác).",
         parameters={
             "type": "object",
             "properties": {
@@ -151,6 +151,7 @@ def build_registry_with_write_tools(
         requires_confirm=True,
     ))
 
+
     registry.register(ToolDefinition(
         name="update_task_status",
         description="Cập nhật status của một task. Chỉ gọi sau khi user xác nhận.",
@@ -158,13 +159,33 @@ def build_registry_with_write_tools(
             "type": "object",
             "properties": {
                 "task_id": {"type": "string", "description": "UUID của task"},
-                "status": {"type": "string", "enum": ["todo", "in_progress", "in_review", "done", "cancelled"]},
+                "status": {"type": "string", "enum": ["todo", "in_progress", "in_review", "done"]},
             },
             "required": ["task_id", "status"],
         },
         handler=lambda **kwargs: write_tools.update_task_status(db, workspace_id, user_id, **kwargs),
         requires_confirm=True,
     ))
+
+    registry.register(ToolDefinition(
+        name="update_task",
+        description="Cập nhật các trường chung của task (tiêu đề, mô tả, ưu tiên, ngày hết hạn, người được gán). Dùng khi user muốn sửa nội dung task. Chỉ gọi sau khi user xác nhận.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "UUID của task"},
+                "title": {"type": "string", "description": "Tiêu đề mới"},
+                "description": {"type": "string", "description": "Mô tả mới (markdown)"},
+                "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"], "description": "Độ ưu tiên mới"},
+                "due_date": {"type": "string", "description": "Ngày hết hạn mới (YYYY-MM-DD)"},
+                "assignee_id": {"type": "string", "description": "UUID người được gán mới"},
+            },
+            "required": ["task_id"],
+        },
+        handler=lambda **kwargs: write_tools.update_task(db, workspace_id, user_id, **kwargs),
+        requires_confirm=True,
+    ))
+
 
     registry.register(ToolDefinition(
         name="assign_task",
@@ -193,6 +214,20 @@ def build_registry_with_write_tools(
             "required": ["task_id", "content"],
         },
         handler=lambda **kwargs: write_tools.add_task_comment(db, workspace_id, user_id, **kwargs),
+        requires_confirm=True,
+    ))
+
+    registry.register(ToolDefinition(
+        name="delete_task",
+        description="Xóa một task (chuyển vào thùng rác). Chỉ gọi sau khi user xác nhận.",
+        parameters={
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string", "description": "UUID của task"},
+            },
+            "required": ["task_id"],
+        },
+        handler=lambda **kwargs: write_tools.delete_task(db, workspace_id, user_id, **kwargs),
         requires_confirm=True,
     ))
 

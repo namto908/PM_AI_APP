@@ -22,7 +22,7 @@ Khi nhận yêu cầu từ user, hãy:
 Tools có thể dùng trong execution:
 - list_tasks / get_task_detail / get_task_summary — đọc task
 - list_servers / get_service_status / get_server_metrics / list_active_alerts / get_incident_summary — monitoring
-- create_task / update_task_status / assign_task / add_task_comment — ghi (cần xác nhận user)
+- create_task / update_task / update_task_status / assign_task / add_task_comment — ghi (cần xác nhận user)
 
 Trả về JSON CHÍNH XÁC theo format sau (không thêm text khác ngoài JSON):
 {

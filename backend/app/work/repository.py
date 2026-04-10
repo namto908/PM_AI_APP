@@ -4,7 +4,7 @@ from typing import Optional
 import uuid
 from datetime import datetime, timezone
 
-from app.work.models import Project, Task, TaskComment, TaskActivity, DeletedTask
+from app.work.models import Project, Task, TaskComment, TaskActivity
 from app.work.schemas import TaskFilter
 
 
@@ -40,6 +40,8 @@ class WorkRepository:
 
     async def get_tasks(self, workspace_id: uuid.UUID, filters: TaskFilter) -> tuple[list[Task], int]:
         query = select(Task).where(Task.workspace_id == workspace_id)
+        if not filters.include_deleted:
+            query = query.where(Task.is_deleted == False)
 
         if filters.status:
             query = query.where(Task.status == filters.status)
@@ -64,10 +66,11 @@ class WorkRepository:
         result = await self.db.execute(query)
         return list(result.scalars().all()), total
 
-    async def get_task(self, workspace_id: uuid.UUID, task_id: uuid.UUID) -> Task | None:
-        result = await self.db.execute(
-            select(Task).where(Task.id == task_id, Task.workspace_id == workspace_id)
-        )
+    async def get_task(self, workspace_id: uuid.UUID, task_id: uuid.UUID, include_deleted: bool = False) -> Task | None:
+        query = select(Task).where(Task.id == task_id, Task.workspace_id == workspace_id)
+        if not include_deleted:
+            query = query.where(Task.is_deleted == False)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def create_task(self, task: Task) -> Task:
@@ -77,12 +80,6 @@ class WorkRepository:
         return task
 
     async def update_task(self, task: Task, updates: dict) -> Task:
-        new_status = updates.get("status")
-        if new_status == "cancelled":
-            await self._archive_task_recursive(task, reason="cancelled")
-            await self.db.commit()
-            return task # Returns the task which is now deleted from session/DB, but metadata is in DeletedTask
-
         for key, value in updates.items():
             setattr(task, key, value)
         task.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -90,41 +87,19 @@ class WorkRepository:
         await self.db.refresh(task)
         return task
 
-    async def _archive_task_recursive(self, task: Task, reason: str) -> None:
-        """Helper to recursively move a task and its subtasks to DeletedTask."""
-        # 1. Archive the task itself
-        archive = DeletedTask(
-            id=task.id,
-            workspace_id=task.workspace_id,
-            project_id=task.project_id,
-            parent_id=task.parent_id,
-            title=task.title,
-            description=task.description,
-            status=task.status,
-            priority=task.priority,
-            assignee_id=task.assignee_id,
-            created_by=task.created_by,
-            due_date=task.due_date,
-            position=task.position,
-            tags=task.tags,
-            metadata_=task.metadata_,
-            created_at=task.created_at,
-            updated_at=task.updated_at,
-            archive_reason=reason
-        )
-        self.db.add(archive)
+    async def _soft_delete_task_recursive(self, task: Task) -> None:
+        """Helper to recursively mark a task and its subtasks as deleted."""
+        task.is_deleted = True
+        task.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         
-        # 2. Archive subtasks
+        # Mark subtasks as deleted
         result = await self.db.execute(select(Task).where(Task.parent_id == task.id))
         subtasks = result.scalars().all()
         for subtask in subtasks:
-            await self._archive_task_recursive(subtask, reason)
-            
-        # 3. Delete from main table
-        await self.db.delete(task)
+            await self._soft_delete_task_recursive(subtask)
 
     async def delete_task(self, task: Task) -> None:
-        await self._archive_task_recursive(task, reason="deleted")
+        await self._soft_delete_task_recursive(task)
         await self.db.commit()
 
     # ---- Comments ----

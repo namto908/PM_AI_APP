@@ -270,7 +270,7 @@ export default function TasksPage() {
 
   const { data, loading, error, refetch } = useTasks(workspaceId, { top_level_only: true });
   const rawTasks = (data?.items ?? []).filter(
-    (t) => t.status !== 'cancelled' && (!filterPriority || t.priority === filterPriority)
+    (t) => !filterPriority || t.priority === filterPriority
   );
   // Apply optimistic overrides so drag feedback is instant
   const tasks = rawTasks.map((t) => ({

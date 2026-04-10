@@ -7,7 +7,7 @@ export interface Task {
   parent_id: string | null;
   title: string;
   description: string | null;
-  status: 'todo' | 'in_progress' | 'in_review' | 'done' | 'cancelled';
+  status: 'todo' | 'in_progress' | 'in_review' | 'done';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignee_id: string | null;
   due_date: string | null;

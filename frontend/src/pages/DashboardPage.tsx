@@ -12,9 +12,6 @@ import { InlineTaskDetail } from '@/components/tasks/InlineTaskDetail';
 import type { Task } from '@/api/tasks';
 import type { Alert } from '@/api/alerts';
 
-// ─── Bar chart bars data ────────────────────────────────────────────────────
-
-const CHART_BARS = [40, 60, 55, 85, 45, 30, 70, 90, 65, 50, 40, 60];
 
 // ─── KPI Card ───────────────────────────────────────────────────────────────
 
@@ -97,26 +94,25 @@ function TaskAccordionRow({ task, isToday, isOverdue, workspaceId, isOpen, onCli
 
   return (
     <div className="flex flex-col border-b border-slate-800/20 last:border-0">
-      <div 
+      <div
         className={`${isOpen ? 'bg-card2/40' : ''} transition-colors duration-500 cursor-pointer`}
         onClick={onClick}
       >
-        <TaskRow 
-          task={task} 
-          isToday={isToday} 
-          isOverdue={isOverdue} 
+        <TaskRow
+          task={task}
+          isToday={isToday}
+          isOverdue={isOverdue}
         />
       </div>
-      <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${
-        isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}>
+      <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}>
         <div className="overflow-hidden">
           {shouldRender && (
             <div className="p-4 bg-card2/20 border-t border-slate-800/30">
-               <InlineTaskDetail 
-                 task={task} 
-                 workspaceId={workspaceId} 
-               />
+              <InlineTaskDetail
+                task={task}
+                workspaceId={workspaceId}
+              />
             </div>
           )}
         </div>
@@ -200,9 +196,9 @@ export default function DashboardPage() {
     <div className="flex-1 overflow-y-auto p-6">
       {/* KPI row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <KpiCard label="Overdue Tasks"   value={String(overdueTasks.length).padStart(2, '0')} icon={AlertTriangle} color="text-[#ffb59a]" />
-        <KpiCard label="Pending Alerts"  value={String(pendingAlerts.length).padStart(2, '0')} icon={Bell}         color="text-[#6bd8cb]" />
-        <KpiCard label="Down Services"   value={String(downServers.length).padStart(2, '0')}  icon={Server}        color="text-[#ffb4ab]" border />
+        <KpiCard label="Overdue Tasks" value={String(overdueTasks.length).padStart(2, '0')} icon={AlertTriangle} color="text-[#ffb59a]" />
+        <KpiCard label="Pending Alerts" value={String(pendingAlerts.length).padStart(2, '0')} icon={Bell} color="text-[#6bd8cb]" />
+        <KpiCard label="Down Services" value={String(downServers.length).padStart(2, '0')} icon={Server} color="text-[#ffb4ab]" border />
       </div>
 
       {/* Asymmetric 2/3 + 1/3 grid */}
@@ -231,7 +227,7 @@ export default function DashboardPage() {
               {prioritizedTasks.length === 0 && (
                 <div className="p-8 text-center text-slate-500 text-sm">
                   <div className="inline-flex w-12 h-12 rounded-full bg-surface-container-highest items-center justify-center mb-3">
-                    <span className="material-symbols-outlined text-xl">done_all</span>
+                    <span className="material-symbols-outlined text-xl">DONE</span>
                   </div>
                   <p>No open tasks right now. Great job!</p>
                 </div>
@@ -253,30 +249,6 @@ export default function DashboardPage() {
 
         {/* Right — server info, charts + alerts */}
         <div className="space-y-8">
-          {/* System Performance chart */}
-          <div className="bg-card p-6 rounded-xl border border-slate-800/40 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#6bd8cb]/5 blur-[40px] rounded-full -mr-10 -mt-10 pointer-events-none" />
-            <div className="flex justify-between mb-8">
-              <div>
-                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#6bd8cb] animate-pulse" />
-                  Telemetry
-                </h2>
-                <p className="text-lg font-bold text-text1">System Metrics</p>
-              </div>
-            </div>
-            <div className="h-32 flex items-end justify-between gap-1.5 px-1">
-              {CHART_BARS.map((pct, i) => (
-                <div
-                  key={i}
-                  className="w-full rounded-t-[2px] bg-[#6bd8cb]/20 relative overflow-hidden group-hover:bg-[#6bd8cb]/30 transition-colors"
-                  style={{ height: `${pct}%` }}
-                >
-                  <div className="absolute inset-0 bg-[#6bd8cb] opacity-40 hover:opacity-100 transition-opacity" />
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Quick actions */}
           <div className="space-y-3">
@@ -339,10 +311,10 @@ export default function DashboardPage() {
           <div className="bg-card p-6 rounded-xl relative overflow-hidden border border-slate-800/40 shadow-inner group">
             <div className="absolute inset-0 bg-gradient-to-br from-[#b4c5ff]/5 to-transparent pointer-events-none group-hover:from-[#b4c5ff]/10 transition-colors" />
             <div className="relative z-10">
-               <div className="flex items-center gap-2 mb-2">
-                 <span className="material-symbols-outlined text-[14px] text-[#b4c5ff]">hub</span>
-                 <p className="text-[10px] uppercase tracking-widest font-bold text-[#b4c5ff]">Overview</p>
-               </div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-[14px] text-[#b4c5ff]">hub</span>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-[#b4c5ff]">Overview</p>
+              </div>
               <h3 className="text-lg font-bold text-text1 mb-1">Architecture Snapshot</h3>
               <p className="text-[11px] text-slate-400 mb-5">Summary of cluster infrastructure.</p>
               <div className="space-y-3">

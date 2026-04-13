@@ -145,6 +145,33 @@ class WorkService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
         await self.repo.delete_task(task)
 
+    async def list_trash(
+        self, workspace_id: uuid.UUID, current_user: dict
+    ) -> list:
+        """Return deleted tasks. superadmin/manager see all; others see only their own."""
+        system_role = current_user.get("system_role", "employee")
+        workspace_role = current_user.get("workspace_role", "employee")
+        can_see_all = system_role in ("superadmin", "manager") or workspace_role in ("owner", "manager")
+        user_id = uuid.UUID(current_user["user_id"]) if not can_see_all else None
+        return await self.repo.get_deleted_tasks(workspace_id, user_id=user_id)
+
+    async def restore_task(
+        self, workspace_id: uuid.UUID, task_id: uuid.UUID, current_user: dict
+    ) -> TaskResponse:
+        """Restore a soft-deleted task. Only superadmin/manager (system or workspace) allowed."""
+        system_role = current_user.get("system_role", "employee")
+        workspace_role = current_user.get("workspace_role", "employee")
+        can_restore = system_role in ("superadmin", "manager") or workspace_role in ("owner", "manager")
+        if not can_restore:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managers and above can restore tasks")
+
+        task = await self.repo.get_task(workspace_id, task_id, include_deleted=True)
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        if not task.is_deleted:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Task is not deleted")
+        return await self.repo.restore_task(task)
+
     # ---- Comments ----
 
     async def add_comment(

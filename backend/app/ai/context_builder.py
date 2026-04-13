@@ -24,7 +24,7 @@ class ContextBuilder:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def build(self, workspace_id: uuid.UUID, user_id: uuid.UUID | None = None) -> str:
+    async def build(self, workspace_id: uuid.UUID, user_id: uuid.UUID | None = None, user_role: str = "employee") -> str:
         today = date.today()
 
         # Task Stats
@@ -88,6 +88,7 @@ class ContextBuilder:
         if user_id:
             # Expose current user UUID so AI can resolve "tôi/me" to the correct assignee_id
             lines.append(f"Current user ID: {user_id}  # Dùng UUID này khi user nói 'tôi', 'giao cho tôi', 'me'")
+        lines.append(f"User role: {user_role}  # Quyền hệ thống của user hiện tại")
         
         lines.append(f"Tasks Stats: {top_level_open} task chính đang mở (Tổng {total_tasks} task trong DB: {top_level} chính, {subtasks} con). Đang có {total_archived} task trong Thùng rác (Trash/Archived).")
         lines.append(f"Tasks Detail: {in_progress} đang xử lý, {urgent} urgent, {overdue} quá hạn")

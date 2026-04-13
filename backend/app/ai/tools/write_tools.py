@@ -154,3 +154,18 @@ async def delete_task(
     fake_user = {"user_id": str(user_id)}
     await WorkService(db).delete_task(workspace_id, uuid.UUID(task_id), fake_user)
     return {"task_id": task_id, "deleted": True}
+
+
+async def restore_task(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    user_id: uuid.UUID,
+    task_id: str,
+    user_role: str = "employee",
+) -> dict:
+    """Restore a soft-deleted task from the trash. Only managers and superadmin can do this. Only call after user confirmation."""
+    from app.work.service import WorkService
+
+    fake_user = {"user_id": str(user_id), "system_role": user_role}
+    task = await WorkService(db).restore_task(workspace_id, uuid.UUID(task_id), fake_user)
+    return {"task_id": str(task.id), "title": task.title, "restored": True}

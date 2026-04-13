@@ -54,6 +54,16 @@ async def list_tasks(
     return await WorkService(db).list_tasks(workspace_id, filters, current_user)
 
 
+@router.get("/workspaces/{workspace_id}/tasks/trash", response_model=list[TaskResponse])
+async def list_trash(
+    workspace_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List soft-deleted tasks. Managers/superadmin see all; others see only their own."""
+    return await WorkService(db).list_trash(workspace_id, current_user)
+
+
 @router.post("/workspaces/{workspace_id}/tasks", response_model=TaskResponse, status_code=201)
 async def create_task(
     workspace_id: uuid.UUID,
@@ -93,6 +103,17 @@ async def delete_task(
     db: AsyncSession = Depends(get_db),
 ):
     await WorkService(db).delete_task(workspace_id, task_id, current_user)
+
+
+@router.post("/workspaces/{workspace_id}/tasks/{task_id}/restore", response_model=TaskResponse)
+async def restore_task(
+    workspace_id: uuid.UUID,
+    task_id: uuid.UUID,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Restore a soft-deleted task. Only managers and superadmin are allowed."""
+    return await WorkService(db).restore_task(workspace_id, task_id, current_user)
 
 
 # ---- Comments ----

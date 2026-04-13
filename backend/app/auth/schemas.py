@@ -37,6 +37,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     avatar_url: str | None
+    system_role: str
 
     model_config = {"from_attributes": True}
 
@@ -78,3 +79,65 @@ class WorkspaceResponse(BaseModel):
     role: str
 
     model_config = {"from_attributes": True}
+
+
+# ── Group schemas ──────────────────────────────────────────────────────────────
+
+class GroupCreate(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def name_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Group name cannot be empty")
+        return v.strip()
+
+
+class GroupResponse(BaseModel):
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    name: str
+    created_by: uuid.UUID | None
+
+    model_config = {"from_attributes": True}
+
+
+class GroupMemberAdd(BaseModel):
+    user_id: uuid.UUID
+
+
+# ── Workspace member management ────────────────────────────────────────────────
+
+class WorkspaceMemberAdd(BaseModel):
+    user_id: uuid.UUID
+    role: str = "employee"
+
+    @field_validator("role")
+    @classmethod
+    def valid_role(cls, v: str) -> str:
+        if v not in ("owner", "manager", "employee", "guest"):
+            raise ValueError("role must be one of: owner, manager, employee, guest")
+        return v
+
+
+class WorkspaceMemberResponse(BaseModel):
+    user_id: uuid.UUID
+    role: str
+    joined_at: str
+
+    model_config = {"from_attributes": True}
+
+
+# ── Admin schemas ──────────────────────────────────────────────────────────────
+
+class AdminUserUpdate(BaseModel):
+    system_role: str | None = None
+    is_active: bool | None = None
+
+    @field_validator("system_role")
+    @classmethod
+    def valid_system_role(cls, v: str | None) -> str | None:
+        if v is not None and v not in ("superadmin", "manager", "employee", "guest"):
+            raise ValueError("system_role must be one of: superadmin, manager, employee, guest")
+        return v

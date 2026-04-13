@@ -7,9 +7,13 @@ import {
   MessageSquare,
   Settings,
   ChevronDown,
+  Users,
+  Shield,
+  Building2,
 } from 'lucide-react';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
-import client from '@/api/client';
+import { useAuthStore } from '@/stores/authStore';
+import { adminApi } from '@/api/admin';
 
 const links = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,22 +22,31 @@ const links = [
   { to: '/ai', icon: MessageSquare, label: 'AI Chat' },
 ];
 
+const ROLE_DISPLAY: Record<string, { label: string; color: string }> = {
+  superadmin: { label: 'Superadmin', color: 'text-amber-400' },
+  manager:    { label: 'Manager',    color: 'text-teal-400' },
+  employee:   { label: 'Employee',   color: 'text-sky-400' },
+  guest:      { label: 'Guest',      color: 'text-violet-400' },
+};
+
 export default function Sidebar() {
   const { activeWorkspaceId, setActiveWorkspace } = useWorkspaceStore();
+  const user = useAuthStore((s) => s.user);
   const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    client.get('/auth/workspaces').then(({ data }) => {
+    adminApi.listWorkspaces().then(({ data }) => {
       setWorkspaces(data);
     }).catch(() => {});
   }, []);
 
   const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
+  const roleCfg = ROLE_DISPLAY[user?.system_role ?? 'employee'];
 
   return (
-    <aside className="w-60 flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
-      <div className="px-4 py-5 font-bold text-xl text-gray-900 dark:text-white select-none">
+    <aside className="w-60 flex-shrink-0 bg-surface border-r border-outline-variant flex flex-col">
+      <div className="px-4 py-5 font-bold text-xl text-on-surface select-none">
         TaskOps <span className="text-indigo-500">AI</span>
       </div>
 
@@ -41,26 +54,26 @@ export default function Sidebar() {
       <div className="px-3 mb-3 relative">
         <button
           onClick={() => setOpen(!open)}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-left"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors text-left"
         >
-          <div className="w-5 h-5 rounded bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+          <div className="w-5 h-5 rounded bg-primary flex items-center justify-center text-on-primary-fixed text-[10px] font-bold flex-shrink-0">
             {(activeWs?.name?.[0] ?? 'W').toUpperCase()}
           </div>
-          <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate flex-1">
+          <span className="text-sm font-medium text-on-surface truncate flex-1">
             {activeWs?.name ?? 'Select workspace'}
           </span>
           <ChevronDown size={14} className="text-gray-400" />
         </button>
         {open && workspaces.length > 0 && (
-          <div className="absolute top-full left-3 right-3 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 py-1">
+          <div className="absolute top-full left-3 right-3 mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-10 py-1">
             {workspaces.map((ws) => (
               <button
                 key={ws.id}
                 onClick={() => { setActiveWorkspace(ws.id); setOpen(false); }}
                 className={`w-full text-left px-3 py-2 text-sm transition-colors ${
                   ws.id === activeWorkspaceId
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-on-surface-variant hover:bg-surface-container'
                 }`}
               >
                 {ws.name}
@@ -79,8 +92,8 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container'
               }`
             }
           >
@@ -88,11 +101,76 @@ export default function Sidebar() {
             {label}
           </NavLink>
         ))}
+
+        {/* Workspaces: For Managers and Superadmins */}
+        {(user?.system_role === 'superadmin' || user?.system_role === 'manager') && (
+          <NavLink
+            to="/workspaces"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container'
+              }`
+            }
+          >
+            <Building2 size={18} />
+            Workspaces
+          </NavLink>
+        )}
+
+        {/* Superadmin: Full User Management */}
+        {user?.system_role === 'superadmin' && (
+          <NavLink
+            to="/admin/users"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container'
+              }`
+            }
+          >
+            <Users size={18} />
+            User Management
+          </NavLink>
+        )}
+
+        {/* Manager: Team Management (employee/guest only) */}
+        {user?.system_role === 'manager' && (
+          <NavLink
+            to="/manager/team"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-teal-500/10 text-teal-400'
+                  : 'text-on-surface-variant hover:bg-surface-container'
+              }`
+            }
+          >
+            <Shield size={18} />
+            Team Management
+          </NavLink>
+        )}
       </nav>
-      <div className="p-3">
+
+      {/* Role Badge + Settings */}
+      <div className="p-3 space-y-1">
+        {/* Current role indicator */}
+        {user && roleCfg && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant mb-1">
+            <div className="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-on-surface">
+              {user.name?.[0]?.toUpperCase() ?? '?'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-on-surface truncate">{user.name}</p>
+              <p className={`text-[10px] font-bold uppercase tracking-wider ${roleCfg.color}`}>{roleCfg.label}</p>
+            </div>
+          </div>
+        )}
         <NavLink
           to="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container"
         >
           <Settings size={18} />
           Settings

@@ -27,7 +27,7 @@ function KpiCard({
   return (
     <div className={`bg-card p-6 rounded-xl flex items-center justify-between hover:bg-card2 transition-colors${border ? ' border-l-4 border-[#ffb4ab]' : ''}`}>
       <div>
-        <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-1">{label}</p>
+        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-1">{label}</p>
         <h3 className={`text-4xl font-bold ${color}`}>{value}</h3>
       </div>
       <div className={`p-3 rounded-lg ${color.replace('text-', 'bg-')}/10`}>
@@ -44,27 +44,27 @@ function TaskRow({ task, isToday, isOverdue, onClick }: { task: Task; isToday?: 
     urgent: AlertTriangle, high: Zap, medium: RefreshCw, low: ClipboardList,
   };
   const colorMap: Record<string, string> = {
-    urgent: 'text-[#ffb59a]', high: 'text-[#ffb59a]', medium: 'text-[#6bd8cb]', low: 'text-slate-400',
+    urgent: 'text-tertiary', high: 'text-tertiary', medium: 'text-primary', low: 'text-on-surface-variant',
   };
   const badgeMap: Record<string, string> = {
-    urgent: 'bg-[#ffb59a]/10 text-[#ffb59a]',
-    high: 'bg-[#ffb59a]/10 text-[#ffb59a]',
-    medium: 'bg-[#6bd8cb]/10 text-[#6bd8cb]',
-    low: 'bg-input text-slate-400',
+    urgent: 'bg-tertiary/10 text-tertiary',
+    high: 'bg-tertiary/10 text-tertiary',
+    medium: 'bg-primary/10 text-primary',
+    low: 'bg-surface-container-highest text-on-surface-variant',
   };
   const Icon = iconMap[task.priority] ?? ClipboardList;
   return (
     <div onClick={onClick} className={`p-4 flex items-center gap-4 hover:bg-card2 transition-colors cursor-pointer ${isToday ? 'bg-card2/30 border-l-4 border-l-[#6bd8cb]' : isOverdue ? 'bg-[#ffb4ab]/5 border-l-4 border-l-[#ffb4ab]' : 'border-l-4 border-l-transparent'}`}>
-      <div className="w-10 h-10 rounded-lg bg-input flex items-center justify-center flex-shrink-0 shadow-inner">
+      <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center flex-shrink-0 shadow-inner">
         <Icon size={18} className={colorMap[task.priority]} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <h4 className="text-sm font-bold text-text1 truncate">{task.title}</h4>
-          {isToday && <span className="bg-[#6bd8cb]/20 text-[#6bd8cb] text-[9px] uppercase font-bold px-1.5 py-0.5 rounded tracking-wider">Today</span>}
-          {isOverdue && <span className="bg-[#ffb4ab]/20 text-[#ffb4ab] text-[9px] uppercase font-bold px-1.5 py-0.5 rounded tracking-wider">Overdue</span>}
+          <h4 className="text-sm font-bold text-on-surface truncate">{task.title}</h4>
+          {isToday && <span className="bg-primary/20 text-primary text-[9px] uppercase font-bold px-1.5 py-0.5 rounded tracking-wider">Today</span>}
+          {isOverdue && <span className="bg-error/20 text-error text-[9px] uppercase font-bold px-1.5 py-0.5 rounded tracking-wider">Overdue</span>}
         </div>
-        <p className="text-xs text-slate-500 truncate">
+        <p className="text-xs text-on-surface-variant truncate">
           {task.due_date ? `Due ${task.due_date}` : 'No due date'} · {task.status.replace(/_/g, ' ')}
         </p>
       </div>
@@ -93,9 +93,9 @@ function TaskAccordionRow({ task, isToday, isOverdue, workspaceId, isOpen, onCli
   }, [isOpen]);
 
   return (
-    <div className="flex flex-col border-b border-slate-800/20 last:border-0">
+    <div className="flex flex-col border-b border-outline-variant/30 last:border-0">
       <div
-        className={`${isOpen ? 'bg-card2/40' : ''} transition-colors duration-500 cursor-pointer`}
+        className={`${isOpen ? 'bg-surface-container/40' : ''} transition-colors duration-500 cursor-pointer`}
         onClick={onClick}
       >
         <TaskRow
@@ -108,7 +108,7 @@ function TaskAccordionRow({ task, isToday, isOverdue, workspaceId, isOpen, onCli
         }`}>
         <div className="overflow-hidden">
           {shouldRender && (
-            <div className="p-4 bg-card2/20 border-t border-slate-800/30">
+            <div className="p-4 bg-surface-container/20 border-t border-outline-variant/40">
               <InlineTaskDetail
                 task={task}
                 workspaceId={workspaceId}
@@ -138,10 +138,10 @@ function AlertRow({ alert, onResolve }: { alert: Alert; onResolve: () => void })
         <span className={`text-xs font-bold ${isCritical ? 'text-[#ffb4ab]' : 'text-[#ffb59a]'}`}>
           {alert.title}
         </span>
-        <span className="text-[10px] text-slate-500 ml-2 flex-shrink-0">{fmtTime(alert.created_at)}</span>
+        <span className="text-[10px] text-on-surface-variant ml-2 flex-shrink-0">{fmtTime(alert.created_at)}</span>
       </div>
       {alert.message && (
-        <p className="text-[11px] text-slate-300 mb-2">{alert.message}</p>
+        <p className="text-[11px] text-on-surface-variant mb-2">{alert.message}</p>
       )}
       {isCritical && (
         <div className="flex gap-2">
@@ -153,7 +153,7 @@ function AlertRow({ alert, onResolve }: { alert: Alert; onResolve: () => void })
           </button>
           <button
             onClick={onResolve}
-            className="text-[10px] font-bold bg-input text-slate-400 px-2 py-1 rounded hover:bg-input2"
+            className="text-[10px] font-bold bg-surface-container-highest text-on-surface-variant px-2 py-1 rounded hover:bg-surface-container"
           >
             Dismiss
           </button>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
   const { servers } = useServers(workspaceId);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const openTasks = tasks?.items.filter(t => t.status !== 'done' && t.status !== 'cancelled') ?? [];
+  const openTasks = tasks?.items.filter(t => t.status !== 'done') ?? [];
   const overdueTasks = openTasks.filter((t) => t.due_date && t.due_date < todayStr);
   const todayTasks = openTasks.filter((t) => t.due_date === todayStr);
   const otherTasks = openTasks.filter((t) => !t.due_date || t.due_date > todayStr);
@@ -187,7 +187,7 @@ export default function DashboardPage() {
   if (!workspaceId) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-6">
-        <p className="text-slate-400">No workspace selected.</p>
+        <p className="text-on-surface-variant font-medium">No workspace selected.</p>
       </div>
     );
   }
@@ -196,9 +196,9 @@ export default function DashboardPage() {
     <div className="flex-1 overflow-y-auto p-6">
       {/* KPI row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <KpiCard label="Overdue Tasks" value={String(overdueTasks.length).padStart(2, '0')} icon={AlertTriangle} color="text-[#ffb59a]" />
-        <KpiCard label="Pending Alerts" value={String(pendingAlerts.length).padStart(2, '0')} icon={Bell} color="text-[#6bd8cb]" />
-        <KpiCard label="Down Services" value={String(downServers.length).padStart(2, '0')} icon={Server} color="text-[#ffb4ab]" border />
+        <KpiCard label="Overdue Tasks" value={String(overdueTasks.length).padStart(2, '0')} icon={AlertTriangle} color="text-tertiary" />
+        <KpiCard label="Pending Alerts" value={String(pendingAlerts.length).padStart(2, '0')} icon={Bell} color="text-primary" />
+        <KpiCard label="Down Services" value={String(downServers.length).padStart(2, '0')} icon={Server} color="text-error" border />
       </div>
 
       {/* Asymmetric 2/3 + 1/3 grid */}
@@ -207,11 +207,11 @@ export default function DashboardPage() {
         {/* Left — task list */}
         <div className="xl:col-span-2 space-y-8">
           {/* Main Tasks list */}
-          <div className="bg-card rounded-xl overflow-hidden shadow-sm border border-slate-800/40 divide-y divide-slate-800/40">
-            <div className="px-6 py-5 flex items-center justify-between border-b border-slate-800/40 bg-card2/20">
+          <div className="bg-surface rounded-xl overflow-hidden shadow-sm border border-outline-variant divide-y divide-outline-variant/30">
+            <div className="px-6 py-5 flex items-center justify-between border-b border-outline-variant/30 bg-surface-container/10">
               <div>
-                <h2 className="text-base font-bold text-text1 flex items-center gap-2">
-                  <ClipboardList size={18} className="text-[#6bd8cb]" />
+                <h2 className="text-base font-bold text-on-surface flex items-center gap-2">
+                  <ClipboardList size={18} className="text-primary" />
                   Open Tasks
                 </h2>
                 <p className="text-[11px] text-slate-500 uppercase tracking-widest mt-1 font-bold">Prioritizing Today's Action Items</p>
@@ -223,9 +223,9 @@ export default function DashboardPage() {
                 View Full Board
               </button>
             </div>
-            <div className="divide-y divide-slate-800/20 max-h-[800px] overflow-y-auto custom-scrollbar">
-              {prioritizedTasks.length === 0 && (
-                <div className="p-8 text-center text-slate-500 text-sm">
+              <div className="divide-y divide-outline-variant/20 max-h-[800px] overflow-y-auto custom-scrollbar">
+                {prioritizedTasks.length === 0 && (
+                  <div className="p-8 text-center text-on-surface-variant text-sm font-medium">
                   <div className="inline-flex w-12 h-12 rounded-full bg-surface-container-highest items-center justify-center mb-3">
                     <span className="material-symbols-outlined text-xl">DONE</span>
                   </div>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <button
               onClick={() => navigate('/tasks')}
-              className="w-full flex items-center justify-between p-4 bg-[#6bd8cb] text-[#003732] rounded-xl font-bold group hover:opacity-90 transition-all shadow-md shadow-[#6bd8cb]/10"
+              className="w-full flex items-center justify-between p-4 bg-primary text-on-primary-fixed rounded-xl font-bold group hover:opacity-90 transition-all shadow-md shadow-primary/10"
             >
               <div className="flex items-center gap-3">
                 <ClipboardList size={20} />
@@ -264,20 +264,20 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => navigate('/monitoring')}
-              className="w-full flex items-center justify-between p-4 bg-card text-text1 rounded-xl font-bold border border-slate-800/40 hover:bg-card2 transition-all group"
+              className="w-full flex items-center justify-between p-4 bg-surface text-on-surface rounded-xl font-bold border border-outline-variant hover:bg-surface-container transition-all group"
             >
               <div className="flex items-center gap-3">
-                <Cpu size={20} className="text-[#6bd8cb]" />
+                <Cpu size={20} className="text-primary" />
                 <span>Check Monitoring</span>
               </div>
               <ChevronRight size={18} className="text-slate-500" />
             </button>
             <button
               onClick={() => navigate('/ai')}
-              className="w-full flex items-center justify-between p-4 bg-card text-text1 rounded-xl font-bold border border-slate-800/40 hover:bg-card2 transition-all group"
+              className="w-full flex items-center justify-between p-4 bg-surface text-on-surface rounded-xl font-bold border border-outline-variant hover:bg-surface-container transition-all group"
             >
               <div className="flex items-center gap-3">
-                <Bot size={20} className="text-[#b4c5ff]" />
+                <Bot size={20} className="text-secondary" />
                 <span>Ask AI Assistant</span>
               </div>
               <ChevronRight size={18} className="text-slate-500" />
@@ -285,21 +285,21 @@ export default function DashboardPage() {
           </div>
 
           {/* Critical alerts */}
-          <div className="bg-card rounded-xl overflow-hidden border border-slate-800/40">
-            <div className="px-6 py-4 flex items-center justify-between border-b border-slate-800/40 bg-card2/20">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                <Bell size={14} className="text-[#ffb4ab]" /> Active Alerts
+          <div className="bg-surface rounded-xl overflow-hidden border border-outline-variant">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-outline-variant/30 bg-surface-container/10">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+                <Bell size={14} className="text-error" /> Active Alerts
               </h2>
               <button
                 onClick={() => navigate('/monitoring')}
-                className="text-[#ffb4ab] text-xs font-bold hover:underline"
+                className="text-error text-xs font-bold hover:underline"
               >
                 View
               </button>
             </div>
             <div className="p-2 space-y-1">
               {pendingAlerts.length === 0 && (
-                <p className="text-sm text-slate-500 p-3 text-center">All systems nominal.</p>
+                <p className="text-sm text-on-surface-variant font-medium p-3 text-center">All systems nominal.</p>
               )}
               {pendingAlerts.slice(0, 3).map((alert) => (
                 <AlertRow key={alert.id} alert={alert} onResolve={() => resolve(alert.id)} />
@@ -308,36 +308,36 @@ export default function DashboardPage() {
           </div>
 
           {/* Active workspace card */}
-          <div className="bg-card p-6 rounded-xl relative overflow-hidden border border-slate-800/40 shadow-inner group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#b4c5ff]/5 to-transparent pointer-events-none group-hover:from-[#b4c5ff]/10 transition-colors" />
+          <div className="bg-surface p-6 rounded-xl relative overflow-hidden border border-outline-variant shadow-inner group">
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent pointer-events-none group-hover:from-secondary/10 transition-colors" />
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-[14px] text-[#b4c5ff]">hub</span>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-[#b4c5ff]">Overview</p>
+                <span className="material-symbols-outlined text-[14px] text-secondary">hub</span>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-secondary">Overview</p>
               </div>
-              <h3 className="text-lg font-bold text-text1 mb-1">Architecture Snapshot</h3>
-              <p className="text-[11px] text-slate-400 mb-5">Summary of cluster infrastructure.</p>
+              <h3 className="text-lg font-bold text-on-surface mb-1">Architecture Snapshot</h3>
+              <p className="text-[11px] text-on-surface-variant font-medium mb-5">Summary of cluster infrastructure.</p>
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm py-1 border-b border-white/5">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Database size={14} className="text-[#b4c5ff]" />
+                <div className="flex items-center justify-between text-sm py-1 border-b border-outline-variant/30">
+                  <div className="flex items-center gap-2 text-on-surface-variant">
+                    <Database size={14} className="text-secondary" />
                     Total tasks tracked
                   </div>
-                  <span className="font-bold text-text1">{tasks?.total ?? 0}</span>
+                  <span className="font-bold text-on-surface">{tasks?.total ?? 0}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm py-1 border-b border-white/5">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Server size={14} className="text-[#6bd8cb]" />
+                <div className="flex items-center justify-between text-sm py-1 border-b border-outline-variant/30">
+                  <div className="flex items-center gap-2 text-on-surface-variant">
+                    <Server size={14} className="text-primary" />
                     Active servers
                   </div>
-                  <span className="font-bold text-text1">{servers.filter((s) => s.is_active).length}</span>
+                  <span className="font-bold text-on-surface">{servers.filter((s) => s.is_active).length}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-1">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <AlertTriangle size={14} className="text-[#ffb4ab]" />
+                  <div className="flex items-center gap-2 text-on-surface-variant">
+                    <AlertTriangle size={14} className="text-error" />
                     Critical alerts
                   </div>
-                  <span className="font-bold text-[#ffb4ab]">{criticalAlerts.length}</span>
+                  <span className="font-bold text-error">{criticalAlerts.length}</span>
                 </div>
               </div>
             </div>

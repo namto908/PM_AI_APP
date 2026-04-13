@@ -67,3 +67,12 @@ async def list_workspaces(
     db: AsyncSession = Depends(get_db),
 ):
     return await AuthService(db).list_workspaces(current_user)
+
+
+@router.delete("/workspaces/{workspace_id}", status_code=204)
+async def delete_workspace(
+    workspace_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await AuthService(db).delete_workspace(workspace_id, current_user)

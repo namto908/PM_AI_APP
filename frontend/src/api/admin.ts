@@ -6,13 +6,21 @@ export interface AdminUser {
   name: string;
   avatar_url: string | null;
   system_role: string;
-  is_active?: boolean;
+  is_active: boolean;
+  is_root: boolean;
 }
 
 export interface WorkspaceMember {
   user_id: string;
   role: string;
   joined_at: string;
+}
+
+export interface WorkspaceInfo {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
 }
 
 export interface Group {
@@ -27,8 +35,27 @@ export const adminApi = {
   listUsers: () =>
     client.get<AdminUser[]>('/admin/users'),
 
+  listTeamUsers: () =>
+    client.get<AdminUser[]>('/admin/team'),
+
   updateUser: (userId: string, data: { system_role?: string; is_active?: boolean }) =>
     client.patch<AdminUser>(`/admin/users/${userId}`, data),
+
+  deleteUser: (userId: string) =>
+    client.delete(`/admin/users/${userId}`),
+
+  createUser: (data: any) =>
+    client.post<AdminUser>('/admin/users', data),
+
+  // ── Workspace management ──────────────────────────────────────────────────
+  createWorkspace: (data: { name: string; slug: string }) =>
+    client.post<WorkspaceInfo>('/auth/workspaces', data),
+
+  listWorkspaces: () =>
+    client.get<WorkspaceInfo[]>('/auth/workspaces'),
+
+  deleteWorkspace: (workspaceId: string) =>
+    client.delete(`/auth/workspaces/${workspaceId}`),
 
   // ── Workspace member management ────────────────────────────────────────────
   listMembers: (workspaceId: string) =>

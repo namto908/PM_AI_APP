@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     XAI_API_KEY: str = ""                  # xAI API key for Grok
     XAI_MODEL: str = "grok-4-1-fast-reasoning"  # xAI model name
 
+    # Default Superadmin
+    SUPERADMIN_IDENTIFIER: str = "admin"
+    SUPERADMIN_PASSWORD: str = "secretpass"
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list) -> list:

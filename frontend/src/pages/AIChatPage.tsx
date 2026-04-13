@@ -17,10 +17,10 @@ function ThinkingBubble({ content }: { content: string }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="flex justify-start mb-4">
-      <div className="max-w-[85%] rounded-2xl border border-[#6bd8cb]/20 bg-[#6bd8cb]/5 overflow-hidden">
+      <div className="max-w-[85%] rounded-2xl border border-primary/20 bg-primary/5 overflow-hidden">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-[#6bd8cb] font-medium hover:bg-[#6bd8cb]/10 transition-colors"
+          className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-primary font-medium hover:bg-primary/10 transition-colors"
         >
           <Brain size={13} />
           <span>Đang lập kế hoạch &amp; reasoning...</span>
@@ -30,7 +30,7 @@ function ThinkingBubble({ content }: { content: string }) {
           />
         </button>
         {expanded && (
-          <div className="px-4 pb-3 pt-2 text-xs text-[#6bd8cb]/80 whitespace-pre-wrap border-t border-[#6bd8cb]/20 leading-relaxed">
+          <div className="px-4 pb-3 pt-2 text-xs text-primary/80 whitespace-pre-wrap border-t border-primary/20 leading-relaxed">
             {content}
           </div>
         )}
@@ -45,35 +45,35 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
-        <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-[#6bd8cb]/10 flex items-center justify-center mr-3 mt-0.5">
-          <Sparkles size={13} className="text-[#6bd8cb]" />
+        <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center mr-3 mt-0.5">
+          <Sparkles size={13} className="text-primary" />
         </div>
       )}
       <div
         className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? 'bg-[#6bd8cb] text-[#003732] font-medium rounded-br-sm'
-            : 'bg-card border border-slate-800/60 text-text1 rounded-bl-sm'
+            ? 'bg-primary text-on-primary-fixed font-medium rounded-br-sm'
+            : 'bg-surface border border-outline-variant text-on-surface rounded-bl-sm'
         }`}
       >
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
           <div className="prose prose-sm max-w-none
-            prose-p:text-text1 prose-p:my-1
-            prose-headings:text-text1 prose-headings:font-bold
-            prose-strong:text-[#6bd8cb]
-            prose-code:text-[#b4c5ff] prose-code:bg-input prose-code:px-1 prose-code:rounded
-            prose-pre:bg-input prose-pre:border prose-pre:border-slate-700/50
-            prose-li:text-text1 prose-li:my-0.5
-            prose-a:text-[#6bd8cb]">
+            prose-p:text-on-surface prose-p:my-1
+            prose-headings:text-on-surface prose-headings:font-bold
+            prose-strong:text-primary
+            prose-code:text-secondary prose-code:bg-surface-container-highest prose-code:px-1 prose-code:rounded
+            prose-pre:bg-surface-container-highest prose-pre:border prose-pre:border-outline-variant
+            prose-li:text-on-surface prose-li:my-0.5
+            prose-a:text-primary">
             <ReactMarkdown>{message.content || '...'}</ReactMarkdown>
           </div>
         )}
       </div>
       {isUser && (
-        <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-[#6bd8cb]/20 flex items-center justify-center ml-3 mt-0.5">
-          <span className="text-xs font-bold text-[#6bd8cb]">U</span>
+        <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-primary/20 flex items-center justify-center ml-3 mt-0.5">
+          <span className="text-xs font-bold text-primary">U</span>
         </div>
       )}
     </div>
@@ -84,7 +84,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 function ToolCallBubble({ message }: { message: ChatMessage }) {
   return (
     <div className="flex justify-start mb-3">
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-[#b4c5ff]/5 border border-[#b4c5ff]/20 rounded-xl text-xs text-[#b4c5ff]">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/5 border border-secondary/20 rounded-xl text-xs text-secondary">
         <Zap size={11} />
         <span className="font-medium">Tool:</span>
         <span className="font-mono">{message.toolName ?? message.content}</span>
@@ -126,47 +126,47 @@ export default function AIChatPage() {
       {/* ── Left panel ──────────────────────────────────────────────── */}
       <div className="w-64 flex-shrink-0 flex flex-col gap-4">
         {/* AI identity card */}
-        <div className="bg-card rounded-2xl p-5">
+        <div className="bg-surface rounded-2xl p-5 border border-outline-variant shadow-sm">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-[#6bd8cb]/10 flex items-center justify-center">
-              <Sparkles size={18} className="text-[#6bd8cb]" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Sparkles size={18} className="text-primary" />
             </div>
             <div>
-              <p className="text-sm font-bold text-text1">TaskOps AI</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Assistant</p>
+              <p className="text-sm font-bold text-on-surface">TaskOps AI</p>
+              <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">Assistant</p>
             </div>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between py-1.5 border-b border-slate-800/30">
-              <span className="text-[10px] text-slate-500">Status</span>
+            <div className="flex justify-between py-1.5 border-b border-outline-variant">
+              <span className="text-[10px] text-on-surface-variant">Status</span>
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-pulse" />
-                <span className="text-[10px] font-bold text-[#6bd8cb]">Online</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-bold text-primary">Online</span>
               </div>
             </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-800/30">
-              <span className="text-[10px] text-slate-500">Messages</span>
-              <span className="text-[10px] font-bold text-text1">{messages.filter(m => m.role !== 'thinking').length}</span>
+            <div className="flex justify-between py-1.5 border-b border-outline-variant">
+              <span className="text-[10px] text-on-surface-variant">Messages</span>
+              <span className="text-[10px] font-bold text-on-surface">{messages.filter(m => m.role !== 'thinking').length}</span>
             </div>
             <div className="flex justify-between py-1.5">
-              <span className="text-[10px] text-slate-500">Mode</span>
-              <span className="text-[10px] font-bold text-[#b4c5ff]">Streaming</span>
+              <span className="text-[10px] text-on-surface-variant">Mode</span>
+              <span className="text-[10px] font-bold text-secondary">Streaming</span>
             </div>
           </div>
         </div>
 
         {/* Suggestion chips */}
-        <div className="bg-card rounded-2xl p-4 flex-1">
-          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Gợi ý</h3>
+        <div className="bg-surface rounded-2xl p-4 flex-1 border border-outline-variant shadow-sm">
+          <h3 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Gợi ý</h3>
           <div className="space-y-2">
             {SUGGESTIONS.map(({ icon: Icon, text }) => (
               <button
                 key={text}
                 onClick={() => setInput(text)}
                 disabled={isStreaming}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-card2 hover:bg-input disabled:opacity-40 rounded-xl text-left text-xs text-slate-300 hover:text-text1 transition-colors group"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-surface-container hover:bg-surface hover:shadow-md disabled:opacity-40 rounded-xl text-left text-xs text-on-surface-variant hover:text-on-surface border border-outline-variant/30 transition-all group"
               >
-                <Icon size={13} className="text-[#6bd8cb] flex-shrink-0" />
+                <Icon size={13} className="text-primary flex-shrink-0" />
                 <span className="leading-snug">{text}</span>
               </button>
             ))}
@@ -177,7 +177,7 @@ export default function AIChatPage() {
         {messages.length > 0 && (
           <button
             onClick={clear}
-            className="flex items-center justify-center gap-2 py-2 rounded-xl border border-slate-800/50 text-xs text-slate-500 hover:text-[#ffb4ab] hover:border-[#ffb4ab]/30 transition-colors"
+            className="flex items-center justify-center gap-2 py-2 rounded-xl border border-outline-variant text-xs text-on-surface-variant hover:text-error hover:border-error/30 transition-colors bg-surface/50"
           >
             <Trash2 size={13} />
             Xóa lịch sử
@@ -190,32 +190,32 @@ export default function AIChatPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <div>
-            <h1 className="text-2xl font-bold text-text1 tracking-tight">AI Chat</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Hỏi bất cứ điều gì về tasks và hệ thống của bạn</p>
+            <h1 className="text-2xl font-bold text-on-surface tracking-tight">AI Chat</h1>
+            <p className="text-xs text-on-surface-variant mt-0.5">Hỏi bất cứ điều gì về tasks và hệ thống của bạn</p>
           </div>
           {isStreaming && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#6bd8cb]/5 border border-[#6bd8cb]/20 rounded-xl">
-              <Loader2 size={13} className="animate-spin text-[#6bd8cb]" />
-              <span className="text-xs text-[#6bd8cb] font-medium">Đang trả lời...</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-xl">
+              <Loader2 size={13} className="animate-spin text-primary" />
+              <span className="text-xs text-primary font-medium">Đang trả lời...</span>
             </div>
           )}
         </div>
 
         {/* Messages list */}
-        <div className="flex-1 overflow-y-auto bg-page rounded-2xl border border-slate-800/30 p-6 mb-4
+        <div className="flex-1 overflow-y-auto bg-surface-container-low rounded-2xl border border-outline-variant p-6 mb-4 shadow-inner
           [&::-webkit-scrollbar]:w-[3px]
-          [&::-webkit-scrollbar-thumb]:bg-input2
-          [&::-webkit-scrollbar-thumb:hover]:bg-[#6bd8cb]
+          [&::-webkit-scrollbar-thumb]:bg-surface-container-highest
+          [&::-webkit-scrollbar-thumb:hover]:bg-primary
           [&::-webkit-scrollbar-track]:bg-transparent">
 
           {isEmpty && (
             <div className="h-full flex flex-col items-center justify-center gap-6 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#6bd8cb]/10 flex items-center justify-center">
-                <Sparkles size={28} className="text-[#6bd8cb]" />
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Sparkles size={28} className="text-primary" />
               </div>
               <div>
-                <p className="text-text1 font-semibold mb-1">Xin chào! Tôi là TaskOps AI</p>
-                <p className="text-sm text-slate-500 max-w-xs">
+                <p className="text-on-surface font-semibold mb-1">Xin chào! Tôi là TaskOps AI</p>
+                <p className="text-sm text-on-surface-variant max-w-xs">
                   Hỏi tôi về tasks, servers, alerts hoặc bất kỳ thứ gì trong workspace của bạn.
                 </p>
               </div>
@@ -224,9 +224,9 @@ export default function AIChatPage() {
                   <button
                     key={text}
                     onClick={() => setInput(text)}
-                    className="flex items-center gap-1.5 text-xs bg-card hover:bg-card2 border border-slate-800/50 text-slate-400 hover:text-text1 px-3 py-1.5 rounded-xl transition-colors"
+                    className="flex items-center gap-1.5 text-xs bg-surface hover:bg-surface-container border border-outline-variant text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-xl transition-all shadow-sm"
                   >
-                    <Icon size={11} className="text-[#6bd8cb]" />
+                    <Icon size={11} className="text-primary" />
                     {text}
                   </button>
                 ))}
@@ -246,13 +246,13 @@ export default function AIChatPage() {
 
           {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
             <div className="flex justify-start mb-4">
-              <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-[#6bd8cb]/10 flex items-center justify-center mr-3 mt-0.5">
-                <Sparkles size={13} className="text-[#6bd8cb]" />
+              <div className="flex-shrink-0 w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center mr-3 mt-0.5">
+                <Sparkles size={13} className="text-primary" />
               </div>
-              <div className="bg-card border border-slate-800/60 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="bg-surface border border-outline-variant rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           )}
@@ -261,7 +261,7 @@ export default function AIChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="flex-shrink-0 bg-card rounded-2xl p-3 flex items-end gap-3 border border-slate-800/40">
+        <div className="flex-shrink-0 bg-surface rounded-2xl p-3 flex items-end gap-3 border border-outline-variant shadow-lg">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -269,12 +269,12 @@ export default function AIChatPage() {
             disabled={isStreaming}
             rows={2}
             placeholder="Nhập câu hỏi... (Enter để gửi, Shift+Enter xuống dòng)"
-            className="flex-1 resize-none bg-transparent border-none text-sm text-text1 placeholder-slate-500 focus:outline-none focus:ring-0 disabled:opacity-50 py-1 leading-relaxed"
+            className="flex-1 resize-none bg-transparent border-none text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-0 disabled:opacity-50 py-1 leading-relaxed"
           />
           <button
             onClick={handleSend}
             disabled={isStreaming || !input.trim()}
-            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-[#6bd8cb] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-[#003732] rounded-xl transition-all"
+            className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-primary hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-on-primary-fixed rounded-xl transition-all shadow-md shadow-primary/10"
           >
             {isStreaming
               ? <Loader2 size={16} className="animate-spin" />

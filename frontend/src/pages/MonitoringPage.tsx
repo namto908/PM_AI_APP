@@ -57,13 +57,13 @@ function SidebarGroup({ label, servers, selectedId, onSelect }: {
     <div>
       <div 
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-between group cursor-pointer text-slate-300 hover:text-primary transition-colors"
+        className="flex items-center justify-between group cursor-pointer text-on-surface-variant hover:text-primary transition-colors"
       >
         <div className="flex items-center gap-2">
           {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span className="font-headline text-sm font-bold capitalize">{label} Production</span>
         </div>
-        <span className={`text-[10px] px-1.5 rounded font-bold ${activeCount === servers.length ? 'bg-primary/10 text-primary' : 'bg-slate-800 text-slate-400'}`}>
+        <span className={`text-[10px] px-1.5 rounded font-bold ${activeCount === servers.length ? 'bg-primary/10 text-primary' : 'bg-surface-container-highest text-on-surface-variant/70'}`}>
           {activeCount}/{servers.length}
         </span>
       </div>
@@ -76,7 +76,7 @@ function SidebarGroup({ label, servers, selectedId, onSelect }: {
               className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs transition-colors ${
                 selectedId === s.id 
                   ? 'bg-primary/10 text-primary font-bold' 
-                  : 'text-slate-400 hover:bg-slate-800/30'
+                  : 'text-on-surface-variant hover:bg-surface-container'
               }`}
             >
               <span>{s.name}</span>
@@ -118,8 +118,8 @@ export default function MonitoringPage() {
       
       {/* ── Left Sidebar (Server Fleet + Alerts) ────────────────── */}
       <div className="w-72 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
-        <section className="bg-card/30 rounded-xl p-4 border border-border-dim backdrop-blur-sm">
-          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Server Fleet</h3>
+        <section className="bg-surface rounded-xl p-4 border border-outline-variant backdrop-blur-sm">
+          <h3 className="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-4">Server Fleet</h3>
           <div className="space-y-4">
             {Array.from(serversByEnv.entries()).map(([env, envServers]) => (
               <SidebarGroup 
@@ -130,12 +130,12 @@ export default function MonitoringPage() {
                 onSelect={setSelectedServer}
               />
             ))}
-            {servers.length === 0 && <p className="text-xs text-slate-500 italic">No servers in fleet.</p>}
+            {servers.length === 0 && <p className="text-xs text-on-surface-variant italic">No servers in fleet.</p>}
           </div>
         </section>
 
-        <section className="flex-1 flex flex-col bg-card/30 rounded-xl p-4 overflow-hidden border border-border-dim backdrop-blur-sm">
-          <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Active Alerts</h3>
+        <section className="flex-1 flex flex-col bg-surface rounded-xl p-4 overflow-hidden border border-outline-variant backdrop-blur-sm">
+          <h3 className="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest mb-4">Active Alerts</h3>
           <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
             {alerts.length === 0 ? (
               <p className="text-xs text-slate-500 italic py-4">All systems clear.</p>
@@ -143,13 +143,13 @@ export default function MonitoringPage() {
               alerts.map(alert => {
                 const c = severityColor(alert.severity);
                 return (
-                  <div key={alert.id} className={`p-3 bg-${c.brand}/5 border-l-2 border-${c.brand} rounded-r-lg group hover:bg-${c.brand}/10 transition-colors`}>
+                  <div key={alert.id} className={`p-3 bg-surface-container border-l-2 border-${c.brand} rounded-r-lg group hover:bg-surface-container-high transition-colors`}>
                     <div className="flex items-center justify-between mb-1">
                       <span className={`text-[10px] font-bold text-${c.brand} uppercase`}>{c.label}</span>
-                      <span className="text-[10px] text-slate-500">{relativeTime(alert.created_at)}</span>
+                      <span className="text-[10px] text-on-surface-variant/60">{relativeTime(alert.created_at)}</span>
                     </div>
-                    <p className="text-xs font-bold text-text1">{alert.title}</p>
-                    {alert.message && <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">{alert.message}</p>}
+                    <p className="text-xs font-bold text-on-surface">{alert.title}</p>
+                    {alert.message && <p className="text-[10px] text-on-surface-variant mt-1 line-clamp-1">{alert.message}</p>}
                   </div>
                 );
               })
@@ -164,22 +164,22 @@ export default function MonitoringPage() {
         {/* Header & Performance Metrics */}
         <div className="flex items-end justify-between">
           <div>
-            <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+            <div className="flex items-center gap-2 text-on-surface-variant text-sm mb-1">
               <span>Fleet</span>
               <ChevronRight size={14} />
               <span className="capitalize">{activeServer?.environment || 'Global'} Production</span>
               <ChevronRight size={14} />
               <span className="text-primary font-bold">{activeServer?.name || 'Overview'}</span>
             </div>
-            <h1 className="text-3xl font-headline font-extrabold text-text1 tracking-tight">System Performance</h1>
+            <h1 className="text-3xl font-headline font-extrabold text-on-surface tracking-tight">System Performance</h1>
           </div>
           
-          <div className="flex bg-card p-1 rounded-xl border border-border-dim shadow-lg">
+          <div className="flex bg-surface p-1 rounded-xl border border-outline-variant shadow-lg">
             {TIME_RANGES.map(r => (
               <button 
                 key={r}
                 onClick={() => setFilter(r)}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${filter === r ? 'bg-primary text-on-primary-fixed font-black shadow-md' : 'text-slate-500 hover:text-slate-200'}`}
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${filter === r ? 'bg-primary text-on-primary-fixed font-black shadow-md' : 'text-on-surface-variant hover:text-on-surface'}`}
               >
                 {r}
               </button>
@@ -188,11 +188,11 @@ export default function MonitoringPage() {
         </div>
 
         {/* Big Chart Area (Mock) */}
-        <section className="bg-card2 border border-border-dim rounded-2xl p-6 relative overflow-hidden group">
+        <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 relative overflow-hidden group">
           <div className="relative z-10">
             <div className="flex items-start justify-between mb-8">
               <div>
-                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Aggregate CPU Utilization</h4>
+                <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Aggregate CPU Utilization</h4>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className="text-4xl font-bold text-primary">42.8%</span>
                   <span className="text-xs text-primary font-bold flex items-center gap-0.5">
@@ -201,8 +201,8 @@ export default function MonitoringPage() {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-slate-500 block uppercase font-bold">Peak Load</span>
-                <span className="text-sm font-bold text-text1">88.2%</span>
+                <span className="text-[10px] text-on-surface-variant block uppercase font-bold">Peak Load</span>
+                <span className="text-sm font-bold text-on-surface">88.2%</span>
               </div>
             </div>
             
@@ -223,18 +223,18 @@ export default function MonitoringPage() {
         {/* Services / Processes Grid */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-text1 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
               <Terminal size={14} className="text-primary" />
               Active Services & Processes
             </h3>
             <div className="flex gap-4">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-primary" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase">{healthyCount || 12} Healthy</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase">{healthyCount || 12} Healthy</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-tertiary" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase">{warnCount || 2} Warnings</span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase">{warnCount || 2} Warnings</span>
               </div>
             </div>
           </div>
@@ -243,26 +243,26 @@ export default function MonitoringPage() {
             {SERVICE_CARDS.map((svc) => {
               const Icon = svc.icon;
               return (
-                <div key={svc.name} className={`flex items-center justify-between p-4 bg-card/40 hover:bg-card/70 rounded-2xl border border-border-dim transition-all group cursor-pointer ${svc.offline ? 'opacity-60' : ''}`}>
+                <div key={svc.name} className={`flex items-center justify-between p-4 bg-surface hover:bg-surface-container rounded-2xl border border-outline-variant transition-all group cursor-pointer ${svc.offline ? 'opacity-60' : ''}`}>
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 ${svc.statusBg} rounded-xl flex items-center justify-center transition-transform group-hover:scale-110`}>
                       <Icon size={20} className={svc.statusColor} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h5 className="text-sm font-bold text-text1">{svc.name}</h5>
+                        <h5 className="text-sm font-bold text-on-surface">{svc.name}</h5>
                         <span className={`text-[10px] px-2 py-0.5 ${svc.statusBg} ${svc.statusColor} font-black rounded`}>
                           {svc.status}
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">{svc.sub}</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">{svc.sub}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-8">
                     <div className="hidden md:flex flex-col items-end">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase">Uptime</span>
-                      <span className={`text-xs font-bold ${svc.offline ? 'text-error' : 'text-text1'}`}>
+                      <span className="text-[10px] font-bold text-on-surface-variant uppercase">Uptime</span>
+                      <span className={`text-xs font-bold ${svc.offline ? 'text-error' : 'text-on-surface'}`}>
                         {svc.offline ? '0s' : '14d 2h'}
                       </span>
                     </div>
@@ -273,7 +273,7 @@ export default function MonitoringPage() {
                       ))}
                     </div>
                     
-                    <button className={`p-2 text-slate-500 hover:${svc.statusColor} transition-all active:scale-90`}>
+                    <button className={`p-2 text-on-surface-variant hover:${svc.statusColor} transition-all active:scale-90`}>
                       {svc.offline ? <Play size={16} /> : <Settings2 size={16} />}
                     </button>
                   </div>
@@ -285,10 +285,10 @@ export default function MonitoringPage() {
 
         {/* Node Bottom Detail View */}
         {activeServer && (
-          <section className="bg-card border border-border-dim rounded-2xl overflow-hidden mb-8">
-            <div className="grid grid-cols-12 divide-x divide-border-dim">
+          <section className="bg-surface border border-outline-variant rounded-2xl overflow-hidden mb-8">
+            <div className="grid grid-cols-12 divide-x divide-outline-variant">
               <div className="col-span-12 lg:col-span-4 p-6">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Node Metadata</h4>
+                <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Node Metadata</h4>
                 <div className="space-y-3">
                   {[
                     ['Hostname', activeServer.hostname || 'prod-east-01.mono'],
@@ -296,30 +296,30 @@ export default function MonitoringPage() {
                     ['Instance', 'C5.4xlarge'],
                     ['Uptime', '142 Days, 4h']
                   ].map(([k, v]) => (
-                    <div key={k} className="flex justify-between py-2 border-b border-border-dim last:border-0">
-                      <span className="text-xs text-slate-400">{k}</span>
-                      <span className="text-xs font-bold text-text1">{v}</span>
+                    <div key={k} className="flex justify-between py-2 border-b border-outline-variant last:border-0">
+                      <span className="text-xs text-on-surface-variant">{k}</span>
+                      <span className="text-xs font-bold text-on-surface">{v}</span>
                     </div>
                   ))}
                 </div>
               </div>
               
-              <div className="col-span-12 lg:col-span-8 p-6 bg-card2/30">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 font-headline">Recent Lifecycle Events</h4>
+              <div className="col-span-12 lg:col-span-8 p-6 bg-surface-container/30">
+                <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4 font-headline">Recent Lifecycle Events</h4>
                 <div className="space-y-3">
                   {RECENT_INCIDENTS.map((inc, idx) => {
                     const Icon = inc.icon;
                     return (
-                      <div key={idx} className="flex items-center gap-4 p-3 bg-card/60 rounded-xl border border-border-dim hover:border-primary/30 transition-colors">
+                      <div key={idx} className="flex items-center gap-4 p-3 bg-surface rounded-xl border border-outline-variant hover:border-primary/30 transition-colors">
                         <div className={`w-8 h-8 rounded-full ${inc.bg} flex items-center justify-center ${inc.color} flex-shrink-0`}>
                           <Icon size={14} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <p className="text-xs font-bold text-text1 truncate">{inc.title}</p>
-                            <span className="text-[10px] text-slate-500 ml-2 shrink-0">{inc.date}</span>
+                            <p className="text-xs font-bold text-on-surface truncate">{inc.title}</p>
+                            <span className="text-[10px] text-on-surface-variant/40 ml-2 shrink-0">{inc.date}</span>
                           </div>
-                          <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{inc.desc}</p>
+                          <p className="text-[10px] text-on-surface-variant mt-0.5 line-clamp-1">{inc.desc}</p>
                         </div>
                       </div>
                     );

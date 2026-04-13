@@ -8,6 +8,9 @@ import AIChatPage from '@/pages/AIChatPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import SettingsPage from '@/pages/SettingsPage';
+import UserManagementPage from '@/pages/UserManagementPage';
+import TeamManagementPage from '@/pages/TeamManagementPage';
+import WorkspacePage from '@/pages/WorkspacePage';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 
@@ -40,6 +43,9 @@ export default function App() {
           <Route path="tasks" element={<TasksPage />} />
           <Route path="monitoring" element={<MonitoringPage />} />
           <Route path="ai" element={<AIChatPage />} />
+          <Route path="admin/users" element={<UserManagementPage />} />
+          <Route path="manager/team" element={<TeamManagementPage />} />
+          <Route path="workspaces" element={<WorkspacePage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -110,73 +110,73 @@ export function InlineTaskDetail({ task, workspaceId }: {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
-    <div className="p-6 bg-card2/50 rounded-xl mt-2 border border-slate-800/40 shadow-sm relative">
+    <div className="p-6 bg-surface-container/50 rounded-2xl mt-2 border border-outline-variant shadow-sm relative">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Primary Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Metadata Cards */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-card p-4 rounded-xl border border-slate-800/40 flex flex-col justify-center">
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Assignee</div>
+            <div className="bg-surface p-4 rounded-xl border border-outline-variant flex flex-col justify-center shadow-sm">
+              <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mb-1">Assignee</div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#6bd8cb]/20 flex items-center justify-center text-[10px] font-bold text-[#6bd8cb]">
+                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
                   {task.assignee_id ? 'A' : '—'}
                 </div>
-                <span className="text-sm font-medium text-text1">{task.assignee_id ? 'Assigned' : 'Unassigned'}</span>
+                <span className="text-sm font-medium text-on-surface">{task.assignee_id ? 'Assigned' : 'Unassigned'}</span>
               </div>
             </div>
-            <div className="bg-card p-4 rounded-xl border border-slate-800/40 flex flex-col justify-center">
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Due Date</div>
-              <div className="flex items-center gap-2 text-[#b4c5ff]">
+            <div className="bg-surface p-4 rounded-xl border border-outline-variant flex flex-col justify-center shadow-sm">
+              <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mb-1">Due Date</div>
+              <div className="flex items-center gap-2 text-secondary">
                 <Calendar size={14} />
                 <span className="text-sm font-medium">{task.due_date ? fmtDate(task.due_date) : 'No due date'}</span>
               </div>
             </div>
-            <div className="bg-card p-4 rounded-xl border border-slate-800/40 flex flex-col justify-center">
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Status</div>
-              <div className="flex items-center gap-2 text-text1">
-                <div className="w-2 h-2 rounded-full bg-[#6bd8cb] animate-pulse"></div>
+            <div className="bg-surface p-4 rounded-xl border border-outline-variant flex flex-col justify-center shadow-sm">
+              <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mb-1">Status</div>
+              <div className="flex items-center gap-2 text-on-surface">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
                 <span className="text-sm font-medium capitalize">{task.status.replace('_', ' ')}</span>
               </div>
             </div>
           </div>
 
           {/* Description */}
-          <div className="bg-card p-6 rounded-xl border border-slate-800/40">
-            <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-4">Task Description</h3>
-            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+          <div className="bg-surface p-6 rounded-xl border border-outline-variant shadow-sm">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-on-surface-variant/50 mb-4">Task Description</h3>
+            <p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">
               {task.description || "No description provided."}
             </p>
           </div>
 
           {/* Subtasks Section */}
-          <div className="bg-card p-6 rounded-xl border border-slate-800/40">
+          <div className="bg-surface p-6 rounded-xl border border-outline-variant shadow-sm">
             <div className="flex justify-between items-end mb-4">
               <div>
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1">Subtasks</h3>
-                <p className="text-xs text-slate-500">{completedSubtasksCount} of {totalSubtasksCount} objectives completed</p>
+                <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-on-surface-variant/50 mb-1">Subtasks</h3>
+                <p className="text-xs text-on-surface-variant">{completedSubtasksCount} of {totalSubtasksCount} objectives completed</p>
               </div>
-              <span className="text-[#6bd8cb] font-bold text-xl">{progressPercent}%</span>
+              <span className="text-primary font-black text-xl">{progressPercent}%</span>
             </div>
             
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full mb-6 overflow-hidden">
-              <div className="bg-[#6bd8cb] h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
+            <div className="w-full bg-surface-container-highest h-1.5 rounded-full mb-6 overflow-hidden">
+              <div className="bg-primary h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(107,216,203,0.4)]" style={{ width: `${progressPercent}%` }}></div>
             </div>
             
             <div className="space-y-3">
               {subtasks.map(st => {
                 const isDone = st.status === 'done';
                 return (
-                  <div key={st.id} className="flex items-center gap-3 p-3 bg-card2 hover:bg-card2/80 border border-slate-800/40 transition-colors rounded-xl group cursor-pointer" onClick={() => toggleSubtaskStatus(st)}>
-                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isDone ? 'bg-[#6bd8cb] text-[#003732]' : 'border-2 border-slate-600 group-hover:border-[#6bd8cb] text-transparent group-hover:text-[#6bd8cb]/30'}`}>
+                  <div key={st.id} className="flex items-center gap-3 p-3 bg-surface-container/40 hover:bg-surface-container/70 border border-outline-variant/50 transition-all rounded-xl group cursor-pointer" onClick={() => toggleSubtaskStatus(st)}>
+                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isDone ? 'bg-primary text-on-primary-fixed' : 'border-2 border-outline-variant group-hover:border-primary text-transparent group-hover:text-primary/30'}`}>
                       {isDone ? <CheckSquare size={12} strokeWidth={3} /> : <CheckSquare size={12} />}
                     </div>
-                    <span className={`flex-1 text-sm ${isDone ? 'text-slate-500 line-through' : 'text-slate-300 font-medium'}`}>
+                    <span className={`flex-1 text-sm ${isDone ? 'text-on-surface-variant/60 line-through font-normal' : 'text-on-surface font-medium'}`}>
                       {st.title}
                     </span>
                     <button 
                       onClick={(e) => { e.stopPropagation(); deleteSubtask(st.id); }}
-                      className="text-slate-500 hover:text-[#ffb4ab] opacity-0 group-hover:opacity-100 transition-all p-1"
+                      className="text-on-surface-variant/40 hover:text-error opacity-0 group-hover:opacity-100 transition-all p-1"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -184,19 +184,19 @@ export function InlineTaskDetail({ task, workspaceId }: {
                 );
               })}
               
-              <form onSubmit={handleCreateSubtask} className="flex items-center gap-3 p-3 bg-card2/50 rounded-xl border border-slate-800/40 ring-1 ring-[#6bd8cb]/10 focus-within:ring-[#6bd8cb]/50 transition-all">
-                <div className="w-5 h-5 rounded border-2 border-slate-600/50 flex items-center justify-center"></div>
+              <form onSubmit={handleCreateSubtask} className="flex items-center gap-3 p-3 bg-surface-container/20 rounded-xl border border-outline-variant/30 ring-1 ring-primary/10 focus-within:ring-primary/50 transition-all">
+                <div className="w-5 h-5 rounded border-2 border-outline-variant/50 flex items-center justify-center"></div>
                 <input 
                   type="text"
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-slate-300 font-medium p-0 text-sm placeholder:text-slate-600" 
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface font-medium p-0 text-sm placeholder:text-on-surface-variant/30" 
                   placeholder="Enter subtask title..." 
                 />
                 <button 
                   type="submit"
                   disabled={!newSubtaskTitle.trim() || addingSubtask}
-                  className="px-3 py-1 bg-[#6bd8cb] text-[#003732] rounded-lg text-[10px] font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  className="px-4 py-1.5 bg-primary text-on-primary-fixed rounded-lg text-[10px] font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 transition-all shadow-sm"
                 >
                   Add
                 </button>
@@ -206,25 +206,25 @@ export function InlineTaskDetail({ task, workspaceId }: {
         </div>
 
         {/* Secondary Column (Activity Feed) */}
-        <div className="bg-card rounded-xl flex flex-col h-[600px] border border-slate-800/40">
-          <div className="p-4 border-b border-slate-800/40">
-            <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Activity & Comments</h3>
+        <div className="bg-surface rounded-xl flex flex-col h-[600px] border border-outline-variant shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-outline-variant/30 bg-surface-container/30">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.15em] text-on-surface-variant/50">Activity & Comments</h3>
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
-            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-800">
-              {loadingComments && <p className="text-[11px] text-slate-500 pl-1">Loading...</p>}
+            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-outline-variant/30">
+              {loadingComments && <p className="text-[11px] text-on-surface-variant/60 pl-1 italic">Loading feed...</p>}
 
               {timelineEvents.map((ev: any) => {
                 if (ev._type === 'comment') {
                   return (
                     <div key={`c-${ev.id}`} className="relative mb-4 group">
-                      <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-[#b4c5ff]/10 border border-[#b4c5ff]/30 flex items-center justify-center">
-                        <MessageSquare size={8} className="text-[#b4c5ff]" />
+                      <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-secondary/10 border border-secondary/30 flex items-center justify-center shadow-sm">
+                        <MessageSquare size={8} className="text-secondary" />
                       </span>
-                      <div className="bg-card2 rounded-xl px-3 py-3 border border-slate-800/30">
-                        <p className="text-xs text-slate-300 leading-relaxed break-words">{ev.content}</p>
-                        <p className="text-[10px] text-slate-500 mt-2">{fmtDate(ev.created_at)}</p>
+                      <div className="bg-surface-container/50 rounded-xl px-4 py-3 border border-outline-variant/20 shadow-sm">
+                        <p className="text-xs text-on-surface leading-relaxed break-words">{ev.content}</p>
+                        <p className="text-[10px] text-on-surface-variant/60 mt-2 font-medium">{fmtDate(ev.created_at)}</p>
                       </div>
                     </div>
                   );
@@ -242,12 +242,12 @@ export function InlineTaskDetail({ task, workspaceId }: {
 
                   return (
                     <div key={`a-${ev.id}`} className="relative mb-4">
-                      <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                      <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-surface-container-highest border border-outline-variant/30 flex items-center justify-center shadow-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40" />
                       </span>
                       <div className="text-xs mt-0.5">
-                        <span className="text-slate-400 font-medium">{activityText}</span>
-                        <p className="text-[10px] text-slate-500 mt-1">{fmtDate(ev.created_at)}</p>
+                        <span className="text-on-surface-variant font-medium">{activityText}</span>
+                        <p className="text-[10px] text-on-surface-variant/40 mt-1 font-mono">{fmtDate(ev.created_at)}</p>
                       </div>
                     </div>
                   );
@@ -255,30 +255,30 @@ export function InlineTaskDetail({ task, workspaceId }: {
               })}
 
               <div className="relative mt-8">
-                <span className="absolute -left-6 top-0 w-4 h-4 rounded-full bg-[#6bd8cb]/20 border-2 border-[#6bd8cb] flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb]" />
+                <span className="absolute -left-6 top-0 w-4 h-4 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shadow-[0_0_8px_rgba(107,216,203,0.3)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                 </span>
                 <div className="text-xs">
-                  <span className="font-bold text-text1">Task created</span>
-                  <p className="text-[10px] text-slate-400 mt-1">{fmtDate(task.created_at)}</p>
+                  <span className="font-black text-on-surface uppercase tracking-wider text-[10px]">Task created</span>
+                  <p className="text-[10px] text-on-surface-variant/50 mt-1">{fmtDate(task.created_at)}</p>
                 </div>
               </div>
 
               {!loadingComments && timelineEvents.length === 0 && (
-                <p className="text-[11px] text-slate-500 pl-1 italic">No recent activity</p>
+                <p className="text-[11px] text-on-surface-variant/40 pl-1 italic">No recent activity</p>
               )}
             </div>
           </div>
 
-          <div className="p-4 bg-card2/30 border-t border-slate-800/40">
+          <div className="p-4 bg-surface-container/30 border-t border-outline-variant/30">
             <form onSubmit={handleComment} className="relative">
               <input
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full bg-input border border-slate-800/40 rounded-xl py-3 pl-4 pr-12 text-xs text-text1 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#6bd8cb]/50"
+                className="w-full bg-surface-container border border-outline-variant/50 rounded-xl py-3 pl-4 pr-12 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary/50 shadow-inner"
                 placeholder="Write a comment..."
               />
-              <button type="submit" disabled={submitting || !comment.trim()} className="absolute right-2 top-2 p-1.5 text-[#6bd8cb] bg-[#6bd8cb]/10 rounded-lg hover:bg-[#6bd8cb]/20 disabled:opacity-40 transition-colors">
+              <button type="submit" disabled={submitting || !comment.trim()} className="absolute right-2 top-2 p-1.5 text-primary bg-primary/10 rounded-lg hover:bg-primary/20 disabled:opacity-40 transition-all shadow-sm">
                 <Send size={14} />
               </button>
             </form>

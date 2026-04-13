@@ -3,10 +3,10 @@ import { CheckSquare, Share2, Trash2, X, Calendar, MoreHorizontal, MessageSquare
 import { tasksApi, type Task, type TaskComment, type TaskActivity } from '@/api/tasks';
 
 const PRIORITY_TAG: Record<string, string> = {
-  low:    'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
-  medium: 'bg-[#b4c5ff]/10 text-[#b4c5ff] border border-[#b4c5ff]/20',
-  high:   'bg-[#ffb59a]/10 text-[#ffb59a] border border-[#ffb59a]/20',
-  urgent: 'bg-[#ffb4ab]/10 text-[#ffb4ab] border border-[#ffb4ab]/20',
+  low:    'bg-surface-container-highest text-on-surface-variant font-black',
+  medium: 'bg-secondary/10 text-secondary border border-secondary/20 font-black',
+  high:   'bg-tertiary/10 text-tertiary border border-tertiary/20 font-black',
+  urgent: 'bg-error/10 text-error border border-error/20 font-black',
 };
 
 function fmtDate(iso: string | null) {
@@ -18,34 +18,34 @@ function DeleteConfirmModal({ taskTitle, onConfirm, onCancel, loading }: {
   taskTitle: string; onConfirm: () => void; onCancel: () => void; loading: boolean;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-[#131b2e] rounded-2xl border border-[#ffb4ab]/20 p-8 w-full max-w-sm shadow-2xl animate-in slide-in-from-top-8 duration-500">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-[#ffb4ab]/10 flex items-center justify-center flex-shrink-0">
-            <Trash2 size={18} className="text-[#ffb4ab]" />
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4 backdrop-blur-md">
+      <div className="bg-surface rounded-2xl border border-error/20 p-8 w-full max-w-sm shadow-2xl animate-in slide-in-from-top-8 duration-500">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-error/10 flex items-center justify-center flex-shrink-0">
+            <Trash2 size={24} className="text-error" />
           </div>
           <div>
-            <h2 className="font-bold text-text1 text-base">Delete this task?</h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-500 mt-0.5">This action cannot be undone</p>
+            <h2 className="font-bold text-on-surface text-lg">Delete this task?</h2>
+            <p className="text-sm text-on-surface-variant/70 mt-0.5">This action cannot be undone</p>
           </div>
         </div>
-        <div className="bg-card2 rounded-xl px-4 py-3 mb-6 border border-slate-200 dark:border-slate-800/40">
-          <p className="text-sm text-slate-300 font-medium truncate">{taskTitle}</p>
+        <div className="bg-surface-container-low rounded-xl px-5 py-4 mb-8 border border-outline-variant/30">
+          <p className="text-sm text-on-surface font-black truncate">{taskTitle}</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <button
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 py-2.5 rounded-xl bg-input text-slate-300 text-sm font-semibold hover:bg-input2 transition-colors disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl bg-surface-container-highest/30 text-on-surface-variant text-sm font-black hover:bg-surface-container-highest/50 transition-all disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 py-2.5 rounded-xl bg-[#ffb4ab]/10 text-[#ffb4ab] border border-[#ffb4ab]/20 text-sm font-semibold hover:bg-[#ffb4ab]/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-xl bg-error text-on-error-container text-sm font-black hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-error/20"
           >
-            {loading ? <span className="w-4 h-4 border-2 border-[#ffb4ab]/30 border-t-[#ffb4ab] rounded-full animate-spin" /> : <Trash2 size={14} />}
+            {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Trash2 size={16} />}
             Delete
           </button>
         </div>
@@ -177,12 +177,12 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
     if (ev._type === 'comment') {
       return (
         <div key={`c-${ev.id}`} className="relative mb-4 group">
-          <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-[#b4c5ff]/10 border border-[#b4c5ff]/30 flex items-center justify-center">
-            <MessageSquare size={8} className="text-[#b4c5ff]" />
+          <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-secondary/10 border border-secondary/30 flex items-center justify-center shadow-sm">
+            <MessageSquare size={8} className="text-secondary" />
           </span>
-          <div className="bg-card2 rounded-xl px-3 py-2.5 border border-slate-800/30 group-hover:border-[#b4c5ff]/20 transition-colors">
-            <p className="text-xs text-text1/90 leading-relaxed break-words">{ev.content}</p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-600 mt-1.5">{fmtDate(ev.created_at)}</p>
+          <div className="bg-surface-container/50 rounded-xl px-4 py-3 border border-outline-variant/20 shadow-sm transition-all group-hover:border-secondary/30">
+            <p className="text-xs text-on-surface leading-relaxed break-words">{ev.content}</p>
+            <p className="text-[10px] text-on-surface-variant/60 mt-2 font-medium">{fmtDate(ev.created_at)}</p>
           </div>
         </div>
       );
@@ -200,12 +200,12 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
       }
       return (
         <div key={`a-${ev.id}`} className="relative mb-4">
-          <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+          <span className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-surface-container-highest border border-outline-variant/30 flex items-center justify-center shadow-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40" />
           </span>
           <div className="text-xs mt-0.5">
-            <span className="text-slate-400 font-medium">{activityText}</span>
-            <p className="text-[10px] text-slate-500 mt-0.5">{fmtDate(ev.created_at)}</p>
+            <span className="text-on-surface-variant font-medium">{activityText}</span>
+            <p className="text-[10px] text-on-surface-variant/40 mt-1 font-mono">{fmtDate(ev.created_at)}</p>
           </div>
         </div>
       );
@@ -213,35 +213,35 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
   };
 
   return (
-    <div className="fixed top-0 right-0 h-full w-[450px] bg-white dark:bg-[#131b2e] shadow-[-20px_0_60px_rgba(0,0,0,0.4)] z-50 border-l border-slate-200 dark:border-slate-800/20 flex flex-col animate-slide-in-right">
-      <div className="p-6 border-b border-slate-800/30 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <CheckSquare size={18} className="text-[#6bd8cb]" />
-          <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Task Detail</span>
+    <div className="fixed top-0 right-0 h-full w-[450px] bg-surface shadow-[-20px_0_60px_rgba(0,0,0,0.4)] z-50 border-l border-outline-variant flex flex-col animate-slide-in-right">
+      <div className="p-6 border-b border-outline-variant/30 flex items-center justify-between flex-shrink-0 bg-surface/80 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <CheckSquare size={20} className="text-primary" />
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-on-surface-variant/60">Task Detail</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="text-slate-400 dark:text-slate-500 hover:text-text1 p-1.5 rounded-lg transition-colors"><Share2 size={16} /></button>
-          <button onClick={() => setShowDeleteConfirm(true)} className="text-slate-400 dark:text-slate-500 hover:text-[#ffb4ab] p-1.5 rounded-lg transition-colors"><Trash2 size={16} /></button>
-          <button onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-text1 p-1.5 rounded-lg ml-2 transition-colors"><X size={16} /></button>
+        <div className="flex items-center gap-1.5">
+          <button className="text-on-surface-variant/60 hover:text-on-surface p-2 rounded-xl hover:bg-surface-container transition-all"><Share2 size={18} /></button>
+          <button onClick={() => setShowDeleteConfirm(true)} className="text-on-surface-variant/60 hover:text-error p-2 rounded-xl hover:bg-error/10 transition-all"><Trash2 size={18} /></button>
+          <button onClick={onClose} className="text-on-surface-variant/60 hover:text-on-surface p-2 rounded-xl ml-2 hover:bg-surface-container transition-all"><X size={20} /></button>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-8" style={{ scrollbarWidth: 'none' }}>
         <div className="mb-8">
-          <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded uppercase tracking-tighter mb-4 inline-block ${PRIORITY_TAG[task.priority]}`}>
+          <span className={`text-[10px] font-black px-3 py-1 rounded inline-block uppercase tracking-widest mb-4 shadow-sm ${PRIORITY_TAG[task.priority]}`}>
             {task.priority}
           </span>
-          <h1 className="font-bold text-2xl text-text1 leading-tight mb-4">{task.title}</h1>
-          <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-[#6bd8cb]/20 flex items-center justify-center text-[9px] font-bold text-[#6bd8cb]">
+          <h1 className="font-bold text-2xl text-on-surface leading-[1.2] mb-5 font-headline">{task.title}</h1>
+          <div className="flex items-center gap-5 text-sm text-on-surface-variant/70">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
                 {task.assignee_id ? 'A' : '—'}
               </div>
-              <span className="font-medium">{task.assignee_id ? 'Assigned' : 'Unassigned'}</span>
+              <span className="font-bold text-on-surface">{task.assignee_id ? 'Assigned' : 'Unassigned'}</span>
             </div>
-            <div className="w-1 h-1 rounded-full bg-slate-700" />
+            <div className="w-1.5 h-1.5 rounded-full bg-outline-variant/30" />
             <div 
-              className="flex items-center gap-1.5 relative group cursor-pointer p-1.5 -m-1.5 rounded-lg hover:bg-slate-800/50 transition-colors"
+              className="flex items-center gap-2 relative group cursor-pointer p-2 -m-2 rounded-xl hover:bg-surface-container transition-all"
               onClick={() => {
                 try {
                   dateInputRef.current?.showPicker();
@@ -252,7 +252,7 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
                 }
               }}
             >
-              <Calendar size={14} />
+              <Calendar size={16} className="text-secondary" />
               <input
                 ref={dateInputRef}
                 type="date"
@@ -266,7 +266,7 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
                 className="absolute inset-x-0 bottom-0 w-full h-full opacity-0 cursor-pointer z-10"
                 title="Change due date"
               />
-              <span className="group-hover:text-slate-200 transition-colors">
+              <span className="group-hover:text-on-surface transition-colors font-bold text-secondary">
                 {task.due_date ? `Due ${fmtDate(task.due_date)}` : 'Set due date'}
               </span>
             </div>
@@ -274,69 +274,69 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-card2 p-4 rounded-xl border border-slate-200 dark:border-slate-800/20">
-            <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-500 mb-2">Status</h5>
-            <p className="text-sm text-text1/80 font-medium">{statusLabel[task.status] ?? task.status}</p>
+          <div className="bg-surface-container/30 p-5 rounded-2xl border border-outline-variant/30 shadow-sm">
+            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3">Status</h5>
+            <p className="text-sm text-on-surface font-bold">{statusLabel[task.status] ?? task.status}</p>
           </div>
 
           {task.description && (
-            <div className="bg-card2 p-4 rounded-xl border border-slate-200 dark:border-slate-800/20">
-              <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-500 mb-2">Description</h5>
-              <p className="text-sm text-text1/80 leading-relaxed">{task.description}</p>
+            <div className="bg-surface-container/30 p-5 rounded-2xl border border-outline-variant/30 shadow-sm">
+              <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3">Description</h5>
+              <p className="text-sm text-on-surface leading-loose text-pretty">{task.description}</p>
             </div>
           )}
 
           {/* Subtasks Section */}
-          <div className="bg-card2 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800/20">
-            <div className="flex justify-between items-end mb-4">
+          <div className="bg-surface-container/30 p-6 rounded-2xl border border-outline-variant/30 shadow-sm">
+            <div className="flex justify-between items-end mb-5">
               <div>
-                <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-500 mb-1">Subtasks</h5>
-                <p className="text-xs text-slate-500">{completedSubtasksCount} of {totalSubtasksCount} objectives completed</p>
+                <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-1">Subtasks</h5>
+                <p className="text-xs text-on-surface-variant/70">{completedSubtasksCount} of {totalSubtasksCount} objectives completed</p>
               </div>
               <div className="text-right">
-                <span className="text-[#6bd8cb] font-bold text-xl font-headline">{progressPercent}%</span>
+                <span className="text-primary font-black text-2xl font-headline">{progressPercent}%</span>
               </div>
             </div>
             
-            <div className="w-full bg-slate-800/50 h-1.5 rounded-full mb-6 overflow-hidden">
-              <div className="bg-[#6bd8cb] h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
+            <div className="w-full bg-surface-container-highest h-2 rounded-full mb-8 overflow-hidden shadow-inner">
+              <div className="bg-primary h-full rounded-full transition-all duration-700 shadow-[0_0_12px_rgba(107,216,203,0.5)]" style={{ width: `${progressPercent}%` }}></div>
             </div>
             
-            <div className="space-y-3 relative">
+            <div className="space-y-3.5 relative">
               {subtasks.map(st => {
                 const isDone = st.status === 'done';
                 return (
-                  <div key={st.id} className="flex items-center gap-3 p-3 bg-slate-800/20 hover:bg-slate-800/40 border border-slate-800/40 transition-colors rounded-xl group cursor-pointer" onClick={() => toggleSubtaskStatus(st)}>
-                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isDone ? 'bg-[#6bd8cb] text-[#003732]' : 'border-2 border-slate-600 group-hover:border-[#6bd8cb] text-transparent group-hover:text-[#6bd8cb]/30'}`}>
-                      {isDone ? <CheckSquare size={12} strokeWidth={3} /> : <CheckSquare size={12} />}
+                  <div key={st.id} className="flex items-center gap-4 p-3.5 bg-surface-container/40 hover:bg-surface-container/70 border border-outline-variant/40 transition-all rounded-xl group cursor-pointer shadow-sm hover:shadow-md" onClick={() => toggleSubtaskStatus(st)}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isDone ? 'bg-primary text-on-primary-fixed shadow-md shadow-primary/20' : 'border-2 border-outline-variant/60 group-hover:border-primary text-transparent group-hover:text-primary/40'}`}>
+                      {isDone ? <CheckSquare size={14} strokeWidth={3} /> : <CheckSquare size={14} />}
                     </div>
-                    <span className={`flex-1 text-sm ${isDone ? 'text-slate-500 line-through' : 'text-slate-300 font-medium'}`}>
+                    <span className={`flex-1 text-sm transition-colors ${isDone ? 'text-on-surface-variant/50 line-through' : 'text-on-surface font-bold'}`}>
                       {st.title}
                     </span>
                     <button 
                       onClick={(e) => { e.stopPropagation(); deleteSubtask(st.id); }}
-                      className="text-slate-500 hover:text-[#ffb4ab] opacity-0 group-hover:opacity-100 transition-all p-1"
+                      className="text-on-surface-variant/40 hover:text-error opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-error/10 rounded-lg"
                       title="Delete Subtask"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 );
               })}
               
-              <form onSubmit={handleCreateSubtask} className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-xl border-l-2 border-[#6bd8cb] ring-1 ring-[#6bd8cb]/20 focus-within:ring-[#6bd8cb]/50 transition-all">
-                <div className="w-5 h-5 rounded border-2 border-slate-600/50 flex items-center justify-center"></div>
+              <form onSubmit={handleCreateSubtask} className="flex items-center gap-4 p-3.5 bg-surface-container/20 rounded-xl border-l-[3px] border-primary ring-1 ring-primary/10 focus-within:ring-primary/50 transition-all shadow-inner">
+                <div className="w-6 h-6 rounded-lg border-2 border-outline-variant/30 flex items-center justify-center"></div>
                 <input 
                   type="text"
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-slate-300 font-medium p-0 text-sm placeholder:text-slate-600" 
-                  placeholder="Enter subtask title..." 
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface font-bold p-0 text-sm placeholder:text-on-surface-variant/30" 
+                  placeholder="New subtask objective..." 
                 />
                 <button 
                   type="submit"
                   disabled={!newSubtaskTitle.trim() || addingSubtask}
-                  className="px-2.5 py-1 bg-[#6bd8cb] text-[#003732] rounded-lg text-[9px] font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  className="px-4 py-2 bg-primary text-on-primary-fixed rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
                 >
                   Add
                 </button>
@@ -344,24 +344,24 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
             </div>
           </div>
 
-          <div className="bg-card2 p-4 rounded-xl border border-slate-200 dark:border-slate-800/20 space-y-2">
-            <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-500 mb-2">Details</h5>
-            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400"><span>Created</span><span>{fmtDate(task.created_at)}</span></div>
-            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400"><span>Updated</span><span>{fmtDate(task.updated_at)}</span></div>
+          <div className="bg-surface-container/30 p-5 rounded-2xl border border-outline-variant/30 shadow-sm space-y-3">
+            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3">System Metadata</h5>
+            <div className="flex justify-between text-xs text-on-surface-variant"><span>Created</span><span className="font-mono text-[10px]">{fmtDate(task.created_at)}</span></div>
+            <div className="flex justify-between text-xs text-on-surface-variant"><span>Last Updated</span><span className="font-mono text-[10px]">{fmtDate(task.updated_at)}</span></div>
             {task.tags.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap pt-1">
+              <div className="flex items-center gap-2 flex-wrap pt-2">
                 {task.tags.map((tag) => (
-                  <span key={tag} className="text-[10px] px-2 py-0.5 bg-[#6bd8cb]/10 text-[#6bd8cb] rounded-md font-medium">{tag}</span>
+                  <span key={tag} className="text-[10px] px-2.5 py-1 bg-primary/10 text-primary rounded-lg font-black uppercase tracking-wider border border-primary/20">{tag}</span>
                 ))}
               </div>
             )}
           </div>
 
-          <div>
-            <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-500 mb-3 px-1">Activity</h5>
-            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-800">
+          <div className="pt-4">
+            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-5 px-1">Activity Feed</h5>
+            <div className="relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-outline-variant/30">
               {loadingComments && (
-                <p className="text-[11px] text-slate-400 dark:text-slate-600 pl-1">Loading timeline...</p>
+                <p className="text-[11px] text-on-surface-variant/40 pl-1 italic">Refreshing timeline...</p>
               )}
 
               {(() => {
@@ -387,26 +387,26 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
                     </div>
 
                     {!loadingComments && hiddenCount > 0 && (
-                      <div className="relative mb-5 mt-2">
-                        <span className="absolute -left-[23px] top-1.5 w-3.5 h-3.5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-                          <MoreHorizontal size={8} className="text-slate-500" />
+                      <div className="relative mb-6 mt-3">
+                        <span className="absolute -left-[23px] top-1.5 w-3.5 h-3.5 rounded-full bg-surface-container-highest border border-outline-variant/30 flex items-center justify-center shadow-sm">
+                          <MoreHorizontal size={8} className="text-on-surface-variant/50" />
                         </span>
                         <button 
                           onClick={() => setShowAllEvents(!showAllEvents)}
-                          className="text-[10px] text-slate-400 hover:text-[#6bd8cb] bg-slate-800/30 hover:bg-slate-800/60 px-3 py-1.5 rounded-md transition-colors"
+                          className="text-[10px] font-black uppercase tracking-widest text-primary hover:text-on-primary-fixed bg-primary/10 hover:bg-primary px-4 py-2 rounded-xl transition-all shadow-sm"
                         >
-                          {showAllEvents ? 'Show less' : `Show ${hiddenCount} older updates`}
+                          {showAllEvents ? 'Show fewer events' : `See ${hiddenCount} more updates`}
                         </button>
                       </div>
                     )}
 
-                    <div className="relative mt-8">
-                      <span className="absolute -left-6 top-0 w-4 h-4 rounded-full bg-[#6bd8cb]/20 border-2 border-[#6bd8cb] flex items-center justify-center">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#6bd8cb]" />
+                    <div className="relative mt-10">
+                      <span className="absolute -left-6 top-0 w-4 h-4 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shadow-[0_0_10px_rgba(107,216,203,0.4)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                       </span>
                       <div className="text-xs">
-                        <span className="font-bold text-text1">Task created</span>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-600 mt-1">{fmtDate(task.created_at)}</p>
+                        <span className="font-black text-on-surface uppercase tracking-wider text-[10px]">Project originated</span>
+                        <p className="text-[10px] text-on-surface-variant/40 mt-1.5 font-mono">{fmtDate(task.created_at)}</p>
                       </div>
                     </div>
                   </>
@@ -414,23 +414,23 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
               })()}
 
               {!loadingComments && comments.length === 0 && activities.length <= 1 && (
-                <p className="text-[11px] text-slate-400 dark:text-slate-600 pl-1 italic">No activity yet</p>
+                <p className="text-[11px] text-on-surface-variant/30 pl-1 italic font-medium">No activity history recorded yet</p>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6 bg-card2 border-t border-slate-200 dark:border-slate-800/30 flex-shrink-0">
-        <form onSubmit={handleComment} className="relative">
+      <div className="p-6 bg-surface-container/50 backdrop-blur-md border-t border-outline-variant/30 flex-shrink-0">
+        <form onSubmit={handleComment} className="relative group">
           <input
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            className="w-full bg-input border border-slate-200 dark:border-transparent rounded-xl py-3 pl-4 pr-12 text-sm text-text1 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#6bd8cb]/30"
-            placeholder="Type a comment..."
+            className="w-full bg-surface-container border border-outline-variant/50 rounded-2xl py-4 pl-5 pr-14 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all shadow-inner group-focus-within:shadow-lg"
+            placeholder="Write a message to the team..."
           />
-          <button type="submit" disabled={submitting || !comment.trim()} className="absolute right-3 top-2.5 text-[#6bd8cb] disabled:opacity-40 hover:opacity-80 transition-opacity">
-            <Send size={18} />
+          <button type="submit" disabled={submitting || !comment.trim()} className="absolute right-3 top-2.5 p-2 text-primary bg-primary/10 rounded-xl hover:bg-primary/20 disabled:opacity-40 transition-all shadow-sm">
+            <Send size={20} />
           </button>
         </form>
       </div>

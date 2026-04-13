@@ -104,21 +104,21 @@ function Spinner() {
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-text1">{title}</h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>
+      <h2 className="text-lg font-bold text-on-surface font-headline">{title}</h2>
+      <p className="text-sm text-on-surface-variant/70 mt-0.5">{subtitle}</p>
     </div>
   );
 }
 
 function Divider() {
-  return <hr className="border-slate-200 dark:border-white/8" />;
+  return <hr className="border-outline-variant/30" />;
 }
 
 function InfoField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</p>
-      <p className="text-sm text-text1 bg-input border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2">{value}</p>
+      <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">{label}</p>
+      <p className="text-sm text-on-surface bg-surface-container border border-outline-variant rounded-xl px-4 py-2.5 shadow-sm">{value}</p>
     </div>
   );
 }
@@ -127,20 +127,20 @@ function Toggle({ checked, onChange, label, description }: {
   checked: boolean; onChange: () => void; label: string; description: string;
 }) {
   return (
-    <div className="flex items-center justify-between py-3.5 border-b border-slate-100 dark:border-white/5 last:border-0">
+    <div className="flex items-center justify-between py-5 border-b border-outline-variant/30 last:border-0 hover:bg-surface-container-low transition-colors px-1 -mx-1 rounded-lg">
       <div>
-        <p className="text-sm font-medium text-text1">{label}</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+        <p className="text-sm font-bold text-on-surface">{label}</p>
+        <p className="text-xs text-on-surface-variant mt-1">{description}</p>
       </div>
       <button
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 focus:ring-offset-card ${
-          checked ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface ${
+          checked ? 'bg-primary' : 'bg-surface-container-highest'
         }`}
       >
-        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow-md ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     </div>
   );
@@ -152,18 +152,18 @@ function PasswordInput({ label, value, onChange }: {
   const [show, setShow] = useState(false);
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">{label}</label>
+      <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">{label}</label>
       <div className="relative">
         <input
           type={show ? 'text' : 'password'}
           value={value}
           onChange={e => onChange(e.target.value)}
-          className="w-full bg-input border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 pr-10 text-sm text-text1 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition"
+          className="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-2.5 pr-12 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50 transition shadow-sm"
         />
         <button
           type="button"
           onClick={() => setShow(s => !s)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
         >
           <IconEye show={show} />
         </button>
@@ -379,27 +379,27 @@ export default function SettingsPage() {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full overflow-hidden bg-page">
+    <div className="flex h-full overflow-hidden bg-background">
 
       {/* ── Left sidebar ─────────────────────────────────────────────── */}
-      <aside className="w-56 flex-shrink-0 border-r border-slate-200 dark:border-white/8 flex flex-col py-6 overflow-y-auto">
-        <p className="px-5 mb-3 text-[10px] font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-500">
+      <aside className="w-56 flex-shrink-0 border-r border-outline-variant flex flex-col py-8 overflow-y-auto bg-surface/30">
+        <p className="px-6 mb-4 text-[10px] font-black tracking-[0.2em] uppercase text-on-surface-variant/40">
           Settings
         </p>
-        <nav className="flex flex-col gap-0.5 px-3">
+        <nav className="flex flex-col gap-1 px-3">
           {navItems.map(({ id, label, Icon }) => {
             const active = activeSection === id;
             return (
               <button
                 key={id}
                 onClick={() => scrollTo(id)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 text-left w-full ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 text-left w-full group ${
                   active
-                    ? 'bg-indigo-500/15 text-indigo-500 dark:text-indigo-400 font-medium'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-primary/10 text-primary font-bold shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                 }`}
               >
-                <span className={active ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}>
+                <span className={`transition-colors ${active ? 'text-primary' : 'text-on-surface-variant/50 group-hover:text-primary/70'}`}>
                   <Icon />
                 </span>
                 {label}
@@ -418,23 +418,22 @@ export default function SettingsPage() {
             <SectionHeader title="User Profile" subtitle="Update your display name, email and password" />
 
             {/* Avatar row */}
-            <div className="mt-6 flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xl font-bold select-none flex-shrink-0 overflow-hidden">
+            <div className="mt-8 flex items-center gap-6 p-6 bg-surface rounded-3xl border border-outline-variant/50 shadow-sm">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-on-primary-fixed text-2xl font-black select-none flex-shrink-0 overflow-hidden shadow-lg">
                 {user?.avatar_url
                   ? <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
                   : initials
                 }
               </div>
-              <div>
-                <p className="text-sm font-medium text-text1">{user?.name ?? '—'}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{user?.email ?? '—'}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Avatar auto-generated from initials</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xl font-bold text-on-surface truncate">{user?.name ?? '—'}</p>
+                <p className="text-sm text-on-surface-variant/70 mt-0.5 truncate">{user?.email ?? '—'}</p>
                 {user?.system_role && (
-                  <span className={`inline-block mt-1.5 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                    user.system_role === 'superadmin' ? 'bg-[#ffb4ab]/20 text-[#ffb4ab]' :
-                    user.system_role === 'manager'    ? 'bg-[#b4c5ff]/20 text-[#b4c5ff]' :
-                    user.system_role === 'guest'      ? 'bg-slate-200 dark:bg-slate-700 text-slate-500' :
-                    'bg-[#6bd8cb]/20 text-[#6bd8cb]'
+                  <span className={`inline-block mt-3 text-[10px] font-black uppercase tracking-[0.1em] px-3 py-1 rounded-lg ${
+                    user.system_role === 'superadmin' ? 'bg-error-container text-on-error-container' :
+                    user.system_role === 'manager'    ? 'bg-secondary-container text-on-secondary-container' :
+                    user.system_role === 'guest'      ? 'bg-surface-container-highest text-on-surface-variant' :
+                    'bg-primary-container text-on-primary-container'
                   }`}>
                     {user.system_role}
                   </span>
@@ -443,54 +442,54 @@ export default function SettingsPage() {
             </div>
 
             {/* Editable fields */}
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">
                   Display Name
                 </label>
                 <input
                   type="text"
                   value={profileName}
                   onChange={e => setProfileName(e.target.value)}
-                  className="w-full bg-input border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-text1 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition"
+                  className="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/50 transition shadow-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">
                   Email Address
                 </label>
                 <input
                   type="email"
                   value={profileEmail}
                   onChange={e => setProfileEmail(e.target.value)}
-                  className="w-full bg-input border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-text1 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition"
+                  className="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/50 transition shadow-sm"
                 />
               </div>
             </div>
 
             {/* Action buttons + status */}
-            <div className="mt-4 flex items-center gap-3 flex-wrap">
+            <div className="mt-6 flex items-center gap-4 flex-wrap">
               <button
                 onClick={handleProfileSave}
                 disabled={profileSaving}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-sm font-medium transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:brightness-110 disabled:opacity-60 text-on-primary-fixed text-sm font-bold transition-all shadow-md shadow-primary/10"
               >
                 {profileSaving && <Spinner />}
                 {profileSaving ? 'Saving…' : 'Save Changes'}
               </button>
               <button
                 onClick={() => { setPwdOpen(true); setPwdStatus('idle'); setPwdErr(''); }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl border border-outline-variant text-sm text-on-surface-variant font-bold hover:bg-surface-container hover:text-on-surface transition-all"
               >
                 Change Password
               </button>
               {profileStatus === 'ok' && (
-                <span className="inline-flex items-center gap-1.5 text-sm text-emerald-500">
+                <span className="inline-flex items-center gap-2 text-sm text-success font-bold">
                   <IconCheck /> Saved
                 </span>
               )}
               {profileStatus === 'err' && (
-                <span className="text-sm text-red-400">{profileErr}</span>
+                <span className="text-sm text-error font-bold">{profileErr}</span>
               )}
             </div>
           </section>
@@ -500,13 +499,13 @@ export default function SettingsPage() {
           {/* ═══ 2. Workspace ═══ */}
           <section id="workspace" ref={el => { sectionRefs.current.workspace = el; }}>
             <SectionHeader title="Workspace" subtitle="Details about your current workspace" />
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 bg-surface-container-low rounded-3xl border border-outline-variant/30">
               <InfoField label="Workspace Name" value={workspace?.name ?? '—'} />
               <InfoField label="Workspace Slug"  value={workspace ? `/${workspace.slug}` : '—'} />
               <InfoField label="Your Role"       value={workspace ? workspace.role.charAt(0).toUpperCase() + workspace.role.slice(1) : '—'} />
               <InfoField label="Region"          value="Global" />
             </div>
-            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-4 text-xs text-on-surface-variant italic">
               Workspace name and slug can be managed by the workspace owner.
             </p>
           </section>
@@ -519,15 +518,15 @@ export default function SettingsPage() {
               <section id="members" ref={el => { sectionRefs.current.members = el; }}>
                 <SectionHeader title="Members" subtitle="Manage workspace members and their roles" />
                 {membersLoading ? (
-                  <p className="text-sm text-slate-400 mt-4">Loading members…</p>
+                  <p className="text-sm text-on-surface-variant mt-4">Loading members…</p>
                 ) : (
-                  <div className="mt-4 rounded-xl bg-card border border-slate-200 dark:border-white/8 divide-y divide-slate-100 dark:divide-white/5">
-                    {members.length === 0 && <p className="px-5 py-4 text-sm text-slate-400">No members found.</p>}
+                  <div className="mt-6 rounded-2xl bg-surface border border-outline-variant divide-y divide-outline-variant/30 shadow-sm overflow-hidden">
+                    {members.length === 0 && <p className="px-6 py-4 text-sm text-on-surface-variant italic">No members found.</p>}
                     {members.map(m => (
-                      <div key={m.user_id} className="flex items-center gap-4 px-5 py-3.5">
+                      <div key={m.user_id} className="flex items-center gap-4 px-6 py-4 hover:bg-surface-container-low transition-colors">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-text1 truncate">{m.user_id}</p>
-                          <p className="text-[11px] text-slate-400">Joined: {new Date(m.joined_at).toLocaleDateString()}</p>
+                          <p className="text-sm font-bold text-on-surface truncate">{m.user_id}</p>
+                          <p className="text-[11px] text-on-surface-variant">Joined: {new Date(m.joined_at).toLocaleDateString()}</p>
                         </div>
                         <select
                           value={m.role}
@@ -707,7 +706,7 @@ export default function SettingsPage() {
           {/* ═══ 3. Notifications ═══ */}
           <section id="notifications" ref={el => { sectionRefs.current.notifications = el; }}>
             <SectionHeader title="Notifications" subtitle="Choose how you want to be notified" />
-            <div className="mt-6 rounded-xl bg-card border border-slate-200 dark:border-white/8 px-5 divide-y divide-slate-100 dark:divide-white/5">
+            <div className="mt-8 rounded-2xl bg-surface border border-outline-variant px-6 shadow-sm">
               <Toggle
                 checked={notifPrefs.emailDigest}
                 onChange={() => toggleNotif('emailDigest')}
@@ -727,7 +726,7 @@ export default function SettingsPage() {
                 description="Always get notified about critical system or AI events"
               />
             </div>
-            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+            <p className="mt-4 text-xs text-on-surface-variant italic">
               Preferences are stored locally in your browser.
             </p>
           </section>
@@ -739,54 +738,58 @@ export default function SettingsPage() {
             <SectionHeader title="Appearance" subtitle="Customize the look and feel of the interface" />
 
             {/* Theme selector */}
-            <div className="mt-6 rounded-xl bg-card border border-slate-200 dark:border-white/8 p-5">
-              <p className="text-sm font-medium text-text1 mb-4">Color Theme</p>
+            <div className="mt-8 rounded-2xl bg-surface border border-outline-variant p-6 shadow-sm">
+              <p className="text-sm font-bold text-on-surface mb-6 uppercase tracking-wider">Color Theme</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => { if (theme === 'dark') toggleTheme(); }}
-                  className={`flex-1 flex flex-col items-center gap-2 py-5 px-3 rounded-xl border-2 transition-all ${
+                  className={`flex-1 flex flex-col items-center gap-4 py-8 px-4 rounded-2xl border-2 transition-all group ${
                     theme === 'light'
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-                      : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : 'border-outline-variant hover:border-primary/50'
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-white shadow">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110 ${theme === 'light' ? 'bg-gradient-to-br from-amber-300 to-orange-400' : 'bg-surface-container-highest'}`}>
                     <IconSun />
                   </div>
-                  <span className={`text-sm font-medium ${theme === 'light' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>
-                    Light
-                  </span>
-                  {theme === 'light' && (
-                    <span className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">Active</span>
-                  )}
+                  <div className="text-center">
+                    <span className={`text-sm font-bold block ${theme === 'light' ? 'text-primary' : 'text-on-surface-variant'}`}>
+                      Light Mode
+                    </span>
+                    {theme === 'light' && (
+                      <span className="text-[10px] text-primary font-black uppercase tracking-widest mt-1 block">Active</span>
+                    )}
+                  </div>
                 </button>
 
                 <button
                   onClick={() => { if (theme === 'light') toggleTheme(); }}
-                  className={`flex-1 flex flex-col items-center gap-2 py-5 px-3 rounded-xl border-2 transition-all ${
+                  className={`flex-1 flex flex-col items-center gap-4 py-8 px-4 rounded-2xl border-2 transition-all group ${
                     theme === 'dark'
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10'
-                      : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : 'border-outline-variant hover:border-primary/50'
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white shadow">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110 ${theme === 'dark' ? 'bg-gradient-to-br from-primary to-primary-container' : 'bg-surface-container-highest'}`}>
                     <IconMoon />
                   </div>
-                  <span className={`text-sm font-medium ${theme === 'dark' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>
-                    Dark
-                  </span>
-                  {theme === 'dark' && (
-                    <span className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">Active</span>
-                  )}
+                  <div className="text-center">
+                    <span className={`text-sm font-bold block ${theme === 'dark' ? 'text-primary' : 'text-on-surface-variant'}`}>
+                      Dark Mode
+                    </span>
+                    {theme === 'dark' && (
+                      <span className="text-[10px] text-primary font-black uppercase tracking-widest mt-1 block">Active</span>
+                    )}
+                  </div>
                 </button>
               </div>
             </div>
 
             {/* Font size slider */}
-            <div className="mt-4 rounded-xl bg-card border border-slate-200 dark:border-white/8 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-medium text-text1">Font Size</p>
-                <span className="text-xs font-mono text-slate-500 dark:text-slate-400">{fontSize}px · {fontSizeLabel}</span>
+            <div className="mt-6 rounded-2xl bg-surface border border-outline-variant p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-bold text-on-surface uppercase tracking-wider">Font Size</p>
+                <span className="text-xs font-black text-primary bg-primary/10 px-3 py-1 rounded-full">{fontSize}px · {fontSizeLabel}</span>
               </div>
               <input
                 type="range"
@@ -795,7 +798,7 @@ export default function SettingsPage() {
                 step={1}
                 value={fontSize}
                 onChange={e => setFontSize(Number(e.target.value))}
-                className="w-full accent-indigo-500 cursor-pointer"
+                className="w-full accent-primary cursor-pointer h-2 bg-surface-container rounded-lg appearance-none"
               />
               <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">
                 <span>Small (12px)</span>

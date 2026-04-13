@@ -36,12 +36,15 @@ class AuthService:
         self.db = db
 
     async def register(self, body: RegisterRequest) -> TokenResponse:
-        result = await self.db.execute(select(User).where(User.email == body.email))
+        result = await self.db.execute(
+            select(User).where((User.email == body.email) | (User.username == body.username))
+        )
         if result.scalar_one_or_none():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email or Username already registered")
 
         user = User(
             email=body.email,
+            username=body.username,
             name=body.name,
             password_hash=_hash_password(body.password),
         )
@@ -53,18 +56,26 @@ class AuthService:
         return TokenResponse(access_token=token)
 
     async def login(self, body: LoginRequest) -> TokenResponse:
-        result = await self.db.execute(select(User).where(User.email == body.email))
+        # Search by email or username
+        result = await self.db.execute(
+            select(User).where((User.email == body.identifier) | (User.username == body.identifier))
+        )
         user = result.scalar_one_or_none()
 
         if not user or not _verify_password(body.password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password",
+                detail="Invalid credentials",
             )
         if not user.is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account disabled")
 
-        token = _create_token({"user_id": str(user.id), "email": user.email, "system_role": user.system_role})
+        # God-mode logic: If identifier matches environment variable, grant total access
+        role = user.system_role
+        if user.username == settings.SUPERADMIN_IDENTIFIER or user.email == settings.SUPERADMIN_IDENTIFIER:
+            role = "superadmin"
+
+        token = _create_token({"user_id": str(user.id), "email": user.email, "system_role": role})
         return TokenResponse(access_token=token)
 
     async def get_me(self, user_id: str) -> User:
@@ -126,3 +137,25 @@ class AuthService:
             WorkspaceResponse(id=ws.id, name=ws.name, slug=ws.slug, role=role)
             for ws, role in rows
         ]
+
+    async def delete_workspace(self, workspace_id: str, current_user: dict) -> None:
+        ws_id = uuid.UUID(workspace_id)
+        user_id = uuid.UUID(current_user["user_id"])
+        
+        # Superadmin can delete any workspace
+        # Otherwise, user must be the owner of the workspace
+        result = await self.db.execute(select(Workspace).where(Workspace.id == ws_id))
+        workspace = result.scalar_one_or_none()
+        
+        if not workspace:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workspace not found")
+            
+        is_superadmin = current_user.get("system_role") == "superadmin"
+        if not is_superadmin and workspace.owner_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Only the workspace owner or a superadmin can delete the workspace"
+            )
+            
+        await self.db.delete(workspace)
+        await self.db.commit()

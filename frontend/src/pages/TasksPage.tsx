@@ -15,19 +15,19 @@ import { usePermissions } from '@/hooks/usePermissions';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const KANBAN_COLUMNS = [
-  { key: 'todo',        label: 'Todo',        badge: 'bg-input text-slate-600 dark:text-slate-400' },
-  { key: 'in_progress', label: 'In Progress', badge: 'bg-[#6bd8cb]/20 text-[#6bd8cb]' },
-  { key: 'in_review',   label: 'Review',      badge: 'bg-input text-slate-600 dark:text-slate-400' },
+  { key: 'todo',        label: 'Todo',        badge: 'bg-surface-container-highest text-on-surface-variant' },
+  { key: 'in_progress', label: 'In Progress', badge: 'bg-primary/20 text-primary' },
+  { key: 'in_review',   label: 'Review',      badge: 'bg-surface-container-highest text-on-surface-variant' },
   { key: 'done',        label: 'Done',        badge: 'bg-teal-500/10 text-teal-400' },
 ] as const;
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
 
 const PRIORITY_TAG: Record<string, string> = {
-  low:    'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
-  medium: 'bg-[#b4c5ff]/10 text-[#b4c5ff] border border-[#b4c5ff]/20',
-  high:   'bg-[#ffb59a]/10 text-[#ffb59a] border border-[#ffb59a]/20',
-  urgent: 'bg-[#ffb4ab]/10 text-[#ffb4ab] border border-[#ffb4ab]/20',
+  low:    'bg-surface-container-highest text-on-surface-variant',
+  medium: 'bg-secondary/10 text-secondary border border-secondary/20',
+  high:   'bg-tertiary/10 text-tertiary border border-tertiary/20',
+  urgent: 'bg-error/10 text-error border border-error/20',
 };
 
 function fmtDate(iso: string | null) {
@@ -47,11 +47,11 @@ function TaskCardContent({ task, isActive, isDragging = false }: { task: Task; i
         'p-4 rounded-2xl transition-all group select-none',
         isDragging ? 'shadow-2xl shadow-[#6bd8cb]/20 scale-[1.03] rotate-1 ring-1 ring-[#6bd8cb]/40' : '',
         isDone
-          ? 'bg-white dark:bg-card/50 border border-slate-200 dark:border-slate-800/40 grayscale hover:grayscale-0 opacity-80'
+          ? 'bg-surface/50 border border-outline-variant grayscale hover:grayscale-0 opacity-80'
           : isInProgress
-          ? 'bg-white dark:bg-card border-l-4 border-[#6bd8cb] ring-1 ring-[#6bd8cb]/10 hover:bg-slate-50 dark:hover:bg-card2 shadow-sm'
-          : 'bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-card2 shadow-sm border border-slate-200 dark:border-transparent',
-        isActive ? 'ring-2 ring-[#6bd8cb]/60' : '',
+          ? 'bg-surface border-l-4 border-primary ring-1 ring-primary/10 hover:bg-surface-container shadow-sm'
+          : 'bg-surface hover:bg-surface-container shadow-sm border border-outline-variant/30',
+        isActive ? 'ring-2 ring-primary/60' : '',
       ].filter(Boolean).join(' ')}
     >
       <div className="flex items-start justify-between mb-3">
@@ -60,28 +60,28 @@ function TaskCardContent({ task, isActive, isDragging = false }: { task: Task; i
         </span>
         {isDone
           ? <CheckSquare size={14} className="text-teal-500" />
-          : <MoreHorizontal size={14} className="text-slate-400 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-400" />
+          : <MoreHorizontal size={14} className="text-on-surface-variant group-hover:text-on-surface" />
         }
       </div>
 
-      <h4 className={`text-sm font-semibold mb-3 leading-snug ${isDone ? 'text-slate-500 line-through' : 'text-text1'}`}>
+      <h4 className={`text-sm font-semibold mb-3 leading-snug ${isDone ? 'text-on-surface-variant line-through' : 'text-on-surface'}`}>
         {task.title}
       </h4>
 
       <div className="flex items-center justify-between">
         <div className="flex -space-x-2">
           {task.assignee_id && (
-            <div className="w-6 h-6 rounded-full bg-[#6bd8cb]/20 border-2 border-card flex items-center justify-center text-[9px] font-bold text-[#6bd8cb]">A</div>
+            <div className="w-6 h-6 rounded-full bg-primary/20 border-2 border-surface flex items-center justify-center text-[9px] font-bold text-primary">A</div>
           )}
         </div>
         <div className="flex items-center gap-3">
           {task.due_date && (
-            <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-500">
+            <div className="flex items-center gap-1 text-[10px] text-on-surface-variant">
               <Calendar size={10} />{fmtDate(task.due_date)}
             </div>
           )}
-          {task.priority === 'urgent' && <Zap size={12} className="text-[#ffb4ab]" />}
-          {task.priority === 'high' && <AlertTriangle size={12} className="text-[#ffb59a]" />}
+          {task.priority === 'urgent' && <Zap size={12} className="text-error" />}
+          {task.priority === 'high' && <AlertTriangle size={12} className="text-tertiary" />}
         </div>
       </div>
     </div>
@@ -124,24 +124,24 @@ function KanbanColumn({ col, tasks, activeId, onCardClick, onAddClick }: {
     <div className="space-y-4 min-w-0">
       <div className="flex items-center justify-between px-2 mb-2">
         <div className="flex items-center gap-2">
-          <h3 className="font-bold text-text1 text-sm uppercase tracking-widest">{col.label}</h3>
+          <h3 className="font-bold text-on-surface text-sm uppercase tracking-widest">{col.label}</h3>
           <span className={`${col.badge} px-2 py-0.5 rounded text-[10px] font-semibold`}>{tasks.length}</span>
         </div>
-        <button onClick={onAddClick} className="text-slate-400 dark:text-slate-500 hover:text-[#6bd8cb] transition-colors">
+        <button onClick={onAddClick} className="text-on-surface-variant hover:text-primary transition-colors">
           <Plus size={14} />
         </button>
       </div>
       <div
         ref={setNodeRef}
         className={`space-y-4 min-h-[80px] rounded-2xl p-1.5 transition-all ${
-          isOver ? 'bg-[#6bd8cb]/5 ring-1 ring-[#6bd8cb]/20' : ''
+          isOver ? 'bg-primary/5 ring-1 ring-primary/20' : ''
         }`}
       >
         {tasks.length === 0 && (
           <div className={`border border-dashed rounded-2xl p-6 text-center transition-colors ${
-            isOver ? 'border-[#6bd8cb]/30 bg-[#6bd8cb]/5' : 'bg-card/40 border-slate-300 dark:border-slate-800'
+            isOver ? 'border-primary/30 bg-primary/5' : 'bg-surface/40 border-outline-variant'
           }`}>
-            <p className="text-[11px] text-slate-400 dark:text-slate-600">No tasks</p>
+            <p className="text-[11px] text-on-surface-variant">No tasks</p>
           </div>
         )}
         {tasks.map((t) => (
@@ -158,17 +158,17 @@ function ListRow({ task, isActive, onClick }: { task: Task; isActive: boolean; o
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors ${isActive ? 'bg-[#6bd8cb]/5' : 'hover:bg-card2'}`}
+      className={`flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors ${isActive ? 'bg-primary/5' : 'hover:bg-surface-container'}`}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-text1 truncate">{task.title}</p>
-        {task.description && <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{task.description}</p>}
+        <p className="text-sm font-semibold text-on-surface truncate">{task.title}</p>
+        {task.description && <p className="text-[11px] text-on-surface-variant truncate mt-0.5">{task.description}</p>}
       </div>
       <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex-shrink-0 ${PRIORITY_TAG[task.priority]}`}>
         {task.priority}
       </span>
       {task.due_date && (
-        <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 flex-shrink-0">
+        <div className="flex items-center gap-1 text-[10px] text-on-surface-variant flex-shrink-0">
           <Calendar size={10} />{fmtDate(task.due_date)}
         </div>
       )}
@@ -196,53 +196,53 @@ function CreateTaskModal({ workspaceId, onCreated, onClose }: {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-[#131b2e] rounded-2xl border border-slate-200 dark:border-slate-800/30 p-8 w-full max-w-md shadow-2xl animate-in slide-in-from-top-8 duration-500">
+      <div className="bg-surface rounded-2xl border border-outline-variant p-8 w-full max-w-md shadow-2xl animate-in slide-in-from-top-8 duration-500">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-bold text-xl text-text1">Create Task</h2>
-          <button onClick={onClose} className="text-slate-400 dark:text-slate-500 hover:text-text1 p-1.5 rounded-lg transition-colors"><X size={18} /></button>
+          <h2 className="font-bold text-xl text-on-surface">Create Task</h2>
+          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-lg transition-colors"><X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-500 mb-1.5">Title *</label>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Title *</label>
             <input
               autoFocus type="text" value={form.title}
               onChange={(e) => set({ title: e.target.value })} required
               placeholder="Task title..."
-              className="w-full bg-input border border-slate-200 dark:border-transparent rounded-xl px-4 py-3 text-sm text-text1 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#6bd8cb]/30"
+              className="w-full bg-surface-container-highest border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Description</label>
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Description</label>
             <textarea
               rows={3} value={form.description ?? ''}
               onChange={(e) => set({ description: e.target.value })}
               placeholder="Optional description..."
-              className="w-full bg-input border border-slate-200 dark:border-transparent rounded-xl px-4 py-3 text-sm text-text1 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#6bd8cb]/30 resize-none"
+              className="w-full bg-surface-container-highest border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Priority</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Priority</label>
               <select value={form.priority} onChange={(e) => set({ priority: e.target.value })}
-                className="w-full bg-input border border-slate-200 dark:border-transparent rounded-xl px-4 py-3 text-sm text-text1 focus:outline-none focus:ring-2 focus:ring-[#6bd8cb]/30">
-                {PRIORITIES.map((p) => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+                className="w-full bg-surface-container-highest border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30">
+                {PRIORITIES.map((p) => <option key={p} value={p} className="bg-surface">{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Due Date</label>
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1.5">Due Date</label>
               <input type="date" value={form.due_date ?? ''}
                 onChange={(e) => set({ due_date: e.target.value || undefined })}
-                className="w-full bg-input border border-slate-200 dark:border-transparent rounded-xl px-4 py-3 text-sm text-text1 focus:outline-none focus:ring-2 focus:ring-[#6bd8cb]/30"
+                className="w-full bg-surface-container-highest border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose}
-              className="px-5 py-2.5 text-sm text-slate-400 hover:text-text1 hover:bg-card2 rounded-xl transition-colors">
+              className="px-5 py-2.5 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-colors">
               Cancel
             </button>
             <button type="submit" disabled={loading}
-              className="flex items-center gap-2 bg-[#6bd8cb] text-[#003732] font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#6bd8cb]/10 hover:shadow-[#6bd8cb]/20 transition-all disabled:opacity-50">
+              className="flex items-center gap-2 bg-primary text-on-primary-fixed font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all disabled:opacity-50">
               <Plus size={16} />
               {loading ? 'Creating...' : 'Create Task'}
             </button>
@@ -352,14 +352,14 @@ export default function TasksPage() {
       {/* Page Header */}
       <div className="flex items-end justify-between mb-6 flex-shrink-0">
         <div>
-          <h2 className="font-bold text-3xl tracking-tight text-text1 mb-1">Task Management</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage project workflows and individual sprint tasks.</p>
+          <h2 className="font-bold text-3xl tracking-tight text-on-surface mb-1">Task Management</h2>
+          <p className="text-on-surface-variant text-sm">Manage project workflows and individual sprint tasks.</p>
         </div>
-        <div className="flex items-center bg-card p-1 rounded-xl">
+        <div className="flex items-center bg-surface p-1 rounded-xl border border-outline-variant/30">
           {(['kanban', 'list'] as const).map((v) => (
             <button key={v} onClick={() => handleViewChange(v)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                view === v ? 'bg-input text-[#6bd8cb] shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                view === v ? 'bg-surface-container-highest text-primary shadow-lg' : 'text-on-surface-variant hover:text-on-surface'
               }`}>
               {v === 'kanban' ? <Kanban size={14} /> : <List size={14} />}
               <span className="text-xs font-bold uppercase tracking-wider">{v}</span>
@@ -367,7 +367,7 @@ export default function TasksPage() {
           ))}
           <button onClick={() => handleViewChange('trash')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-              view === 'trash' ? 'bg-input text-[#ffb4ab] shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              view === 'trash' ? 'bg-surface-container-highest text-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'
             }`}>
             <Trash2 size={14} />
             <span className="text-xs font-bold uppercase tracking-wider">Trash</span>
@@ -377,32 +377,32 @@ export default function TasksPage() {
 
       {/* Filter Bar — hide when viewing trash */}
       {view !== 'trash' && (
-        <div className="flex flex-wrap items-center gap-3 mb-6 bg-card/50 p-3 rounded-2xl flex-shrink-0">
-          <div className="relative flex items-center gap-2 px-3 py-2 bg-card2 rounded-xl text-sm border border-slate-200 dark:border-slate-800/20">
-            <span className="text-slate-600 dark:text-slate-500 text-[10px] font-bold uppercase tracking-tighter">Priority:</span>
+        <div className="flex flex-wrap items-center gap-3 mb-6 bg-surface-container/50 p-3 rounded-2xl flex-shrink-0 border border-outline-variant/30">
+          <div className="relative flex items-center gap-2 px-3 py-2 bg-surface-container rounded-xl text-sm border border-outline-variant">
+            <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-tighter">Priority:</span>
             <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
-              className="bg-transparent border-none text-text1 text-xs focus:outline-none cursor-pointer pr-4 appearance-none">
-              <option value="">All</option>
-              {PRIORITIES.map((p) => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+              className="bg-transparent border-none text-on-surface text-xs focus:outline-none cursor-pointer pr-4 appearance-none">
+              <option value="" className="bg-surface">All</option>
+              {PRIORITIES.map((p) => <option key={p} value={p} className="bg-surface">{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
             </select>
-            <ChevronDown size={12} className="text-slate-400 dark:text-slate-500 pointer-events-none absolute right-2" />
+            <ChevronDown size={12} className="text-on-surface-variant pointer-events-none absolute right-2" />
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-2 bg-card2 rounded-xl text-sm border border-slate-200 dark:border-slate-800/20">
-            <span className="text-slate-600 dark:text-slate-500 text-[10px] font-bold uppercase tracking-tighter">Due Date:</span>
-            <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-surface-container rounded-xl text-sm border border-outline-variant">
+            <span className="text-on-surface-variant text-[10px] font-bold uppercase tracking-tighter">Due Date:</span>
+            <Calendar size={12} className="text-on-surface-variant" />
           </div>
 
           <div className="ml-auto flex items-center gap-3">
             {filterPriority && (
               <button onClick={() => setFilterPriority('')}
-                className="flex items-center gap-2 text-slate-400 hover:text-text1 px-3 py-2 text-sm transition-colors">
+                className="flex items-center gap-2 text-on-surface-variant hover:text-on-surface px-3 py-2 text-sm transition-colors">
                 <Filter size={16} /> Clear Filters
               </button>
             )}
             {canWriteTasks() && (
               <button onClick={() => setCreateOpen(true)}
-                className="flex items-center gap-2 bg-[#6bd8cb] text-[#003732] font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#6bd8cb]/10 hover:shadow-[#6bd8cb]/20 transition-all">
+                className="flex items-center gap-2 bg-primary text-on-primary-fixed font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all">
                 <Plus size={16} /> Create Task
               </button>
             )}
@@ -411,8 +411,8 @@ export default function TasksPage() {
       )}
 
       {loading && view !== 'trash' && (
-        <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-          <div className="w-4 h-4 border-2 border-[#6bd8cb] border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-sm text-on-surface-variant mb-4 font-medium">
+          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           Loading tasks...
         </div>
       )}
@@ -448,12 +448,12 @@ export default function TasksPage() {
       {/* List */}
       {view === 'list' && (
         <div className="flex-1 overflow-auto">
-          <div className="bg-card rounded-2xl border border-slate-800/20 divide-y divide-slate-800/30 overflow-hidden">
+          <div className="bg-surface rounded-2xl border border-outline-variant divide-y divide-outline-variant/30 overflow-hidden">
             {tasks.length === 0 && !loading && (
               <div className="py-16 text-center">
-                <p className="text-sm text-slate-500">No tasks yet.</p>
+                <p className="text-sm text-on-surface-variant font-medium">No tasks yet.</p>
                 {canWriteTasks() && (
-                  <button onClick={() => setCreateOpen(true)} className="mt-3 text-sm text-[#6bd8cb] hover:underline">
+                  <button onClick={() => setCreateOpen(true)} className="mt-3 text-sm text-primary font-bold hover:underline">
                     Create your first task
                   </button>
                 )}
@@ -470,36 +470,36 @@ export default function TasksPage() {
       {view === 'trash' && (
         <div className="flex-1 overflow-auto">
           <div className="mb-4 flex items-center gap-3">
-            <Trash2 size={16} className="text-[#ffb4ab]" />
-            <h3 className="text-sm font-bold text-text1">
+            <Trash2 size={16} className="text-error" />
+            <h3 className="text-sm font-bold text-on-surface">
               {canRestoreTask() ? 'All deleted tasks (you can restore)' : 'Your deleted tasks'}
             </h3>
-            <button onClick={loadTrash} className="ml-auto text-xs text-slate-400 hover:text-text1 transition-colors px-3 py-1.5 rounded-lg bg-card2">
+            <button onClick={loadTrash} className="ml-auto text-xs text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant">
               Refresh
             </button>
           </div>
 
           {trashLoading && (
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-              <div className="w-4 h-4 border-2 border-[#ffb4ab] border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-sm text-on-surface-variant mb-4 font-medium">
+              <div className="w-4 h-4 border-2 border-error border-t-transparent rounded-full animate-spin" />
               Loading trash...
             </div>
           )}
 
           {!trashLoading && trashTasks.length === 0 && (
-            <div className="py-16 text-center bg-card rounded-2xl border border-slate-200 dark:border-slate-800/20">
-              <Trash2 size={32} className="mx-auto text-slate-400 dark:text-slate-600 mb-3" />
-              <p className="text-sm text-slate-500">Trash is empty.</p>
+            <div className="py-16 text-center bg-surface rounded-2xl border border-outline-variant">
+              <Trash2 size={32} className="mx-auto text-on-surface-variant opacity-20 mb-3" />
+              <p className="text-sm text-on-surface-variant font-medium">Trash is empty.</p>
             </div>
           )}
 
           {!trashLoading && trashTasks.length > 0 && (
-            <div className="bg-card rounded-2xl border border-slate-800/20 divide-y divide-slate-800/30 overflow-hidden">
+            <div className="bg-surface rounded-2xl border border-outline-variant divide-y divide-outline-variant/30 overflow-hidden">
               {trashTasks.map((t) => (
                 <div key={t.id} className="flex items-center gap-4 px-5 py-3.5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-text1 truncate line-through opacity-60">{t.title}</p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-sm font-semibold text-on-surface truncate line-through opacity-40">{t.title}</p>
+                    <p className="text-[11px] text-on-surface-variant mt-0.5">
                       Deleted: {new Date(t.updated_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -510,7 +510,7 @@ export default function TasksPage() {
                     <button
                       onClick={() => handleRestoreTask(t.id)}
                       disabled={restoringId === t.id}
-                      className="flex items-center gap-1.5 text-[11px] font-semibold text-[#6bd8cb] hover:text-[#4ec9bc] px-3 py-1.5 rounded-lg bg-[#6bd8cb]/10 hover:bg-[#6bd8cb]/20 transition-all disabled:opacity-50"
+                      className="flex items-center gap-1.5 text-[11px] font-bold text-primary hover:text-primary/80 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 transition-all disabled:opacity-50"
                     >
                       <RotateCcw size={12} className={restoringId === t.id ? 'animate-spin' : ''} />
                       {restoringId === t.id ? 'Restoring...' : 'Restore'}

@@ -4,6 +4,7 @@ import uuid
 
 class RegisterRequest(BaseModel):
     email: EmailStr
+    username: str
     name: str
     password: str
 
@@ -14,6 +15,13 @@ class RegisterRequest(BaseModel):
             raise ValueError("Password must be at least 8 characters")
         return v
 
+    @field_validator("username")
+    @classmethod
+    def username_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Username cannot be empty")
+        return v.strip()
+
     @field_validator("name")
     @classmethod
     def name_not_empty(cls, v: str) -> str:
@@ -23,8 +31,13 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    identifier: str  # Can be email or username
     password: str
+
+    @field_validator("identifier")
+    @classmethod
+    def strip_identifier(cls, v: str) -> str:
+        return v.strip()
 
 
 class TokenResponse(BaseModel):
@@ -38,6 +51,8 @@ class UserResponse(BaseModel):
     name: str
     avatar_url: str | None
     system_role: str
+    is_active: bool = True
+    is_root: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -138,6 +153,36 @@ class AdminUserUpdate(BaseModel):
     @field_validator("system_role")
     @classmethod
     def valid_system_role(cls, v: str | None) -> str | None:
-        if v is not None and v not in ("superadmin", "manager", "employee", "guest"):
-            raise ValueError("system_role must be one of: superadmin, manager, employee, guest")
+        if v is not None:
+            if v == "superadmin":
+                raise ValueError("Assigning the superadmin role is not permitted")
+            if v not in ("manager", "employee", "guest"):
+                raise ValueError("system_role must be one of: manager, employee, guest")
+        return v
+
+
+class AdminUserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    name: str
+    password: str
+    system_role: str = "employee"
+
+    @field_validator("username", "name")
+    @classmethod
+    def strip_strings(cls, v: str) -> str:
+        return v.strip()
+
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return v
+
+    @field_validator("system_role")
+    @classmethod
+    def valid_system_role(cls, v: str) -> str:
+        if v not in ("manager", "employee", "guest"):
+            raise ValueError("system_role must be one of: manager, employee, guest")
         return v

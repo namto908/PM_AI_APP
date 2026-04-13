@@ -683,17 +683,17 @@ export default function SettingsPage() {
                         <button
                           onClick={async () => {
                             try {
-                              await adminApi.updateUser(u.id, { is_active: !u.is_active });
-                              setAdminUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_active: !u.is_active } : x));
+                              await adminApi.updateUser(u.id, { is_active: u.is_active === false });
+                              setAdminUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_active: u.is_active === false } : x));
                             } catch {}
                           }}
                           className={`text-xs px-3 py-1.5 rounded-lg transition-colors font-medium ${
-                            u.is_active !== false
-                              ? 'bg-red-500/10 text-[#ffb4ab] hover:bg-red-500/20'
-                              : 'bg-[#6bd8cb]/10 text-[#6bd8cb] hover:bg-[#6bd8cb]/20'
+                            u.is_active === false
+                              ? 'bg-[#6bd8cb]/10 text-[#6bd8cb] hover:bg-[#6bd8cb]/20'
+                              : 'bg-red-500/10 text-[#ffb4ab] hover:bg-red-500/20'
                           }`}
                         >
-                          {u.is_active !== false ? 'Deactivate' : 'Activate'}
+                          {u.is_active === false ? 'Activate' : 'Deactivate'}
                         </button>
                       </div>
                     ))}

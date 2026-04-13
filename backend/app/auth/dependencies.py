@@ -26,7 +26,7 @@ async def get_current_user(
 
 
 def require_workspace_role(minimum_role: str):
-    """Dependency factory: check workspace role of user (via JWT payload)."""
+    """Dependency factory: check workspace role of user (from JWT decoded payload)."""
 
     async def check(current_user: dict = Depends(get_current_user)) -> dict:
         user_role = current_user.get("workspace_role", "guest")

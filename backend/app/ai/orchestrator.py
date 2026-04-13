@@ -16,10 +16,11 @@ from sqlalchemy import select
 
 
 class AgentOrchestrator:
-    def __init__(self, db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID):
+    def __init__(self, db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID, user_role: str = "employee"):
         self.db = db
         self.workspace_id = workspace_id
         self.user_id = user_id
+        self.user_role = user_role
         self.context_builder = ContextBuilder(db)
         self.prompt_builder = PromptBuilder()
         self.safety = SafetyLayer()
@@ -98,7 +99,7 @@ class AgentOrchestrator:
         Main agent loop — yields SSE-formatted data chunks.
         Handles tool calls with safety confirmation for write actions.
         """
-        context = await self.context_builder.build(self.workspace_id, self.user_id)
+        context = await self.context_builder.build(self.workspace_id, self.user_id, user_role=self.user_role)
 
         # Planning step — skip for confirmation responses
         plan_result = None
@@ -133,7 +134,7 @@ class AgentOrchestrator:
             return
 
         client = self._xai_client()
-        registry = build_registry_with_write_tools(self.db, self.workspace_id, self.user_id)
+        registry = build_registry_with_write_tools(self.db, self.workspace_id, self.user_id, user_role=self.user_role)
         tools_schema = registry.list_openai_tools()
 
         # Build messages list: system + history + current user message
@@ -254,7 +255,7 @@ class AgentOrchestrator:
     async def _execute_confirmed_write(
         self, conversation_id: uuid.UUID, tools_to_exec: list[dict]
     ) -> AsyncGenerator[str, None]:
-        registry = build_registry_with_write_tools(self.db, self.workspace_id, self.user_id)
+        registry = build_registry_with_write_tools(self.db, self.workspace_id, self.user_id, user_role=self.user_role)
         results = []
         
         for tool_info in tools_to_exec:

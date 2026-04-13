@@ -3,8 +3,18 @@ import uuid
 from app.ai.tool_registry import ToolRegistry, ToolDefinition
 from app.ai.tools import task_tools, monitoring_tools
 
+# System role hierarchy for permission checks
+_ROLE_ORDER = ["guest", "employee", "manager", "superadmin"]
 
-def build_registry(db: AsyncSession, workspace_id: uuid.UUID) -> ToolRegistry:
+
+def _role_gte(user_role: str, minimum: str) -> bool:
+    try:
+        return _ROLE_ORDER.index(user_role) >= _ROLE_ORDER.index(minimum)
+    except ValueError:
+        return False
+
+
+def build_registry(db: AsyncSession, workspace_id: uuid.UUID, user_role: str = "employee") -> ToolRegistry:
     registry = ToolRegistry()
 
     # ---- Read tools: Tasks ----
@@ -126,12 +136,16 @@ def build_registry(db: AsyncSession, workspace_id: uuid.UUID) -> ToolRegistry:
 
 
 def build_registry_with_write_tools(
-    db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID
+    db: AsyncSession, workspace_id: uuid.UUID, user_id: uuid.UUID, user_role: str = "employee"
 ) -> ToolRegistry:
-    """Registry including write tools (used after confirmation)."""
+    """Registry including write tools (used after confirmation), filtered by user_role."""
     from app.ai.tools import write_tools
 
-    registry = build_registry(db, workspace_id)
+    registry = build_registry(db, workspace_id, user_role)
+
+    # Guests only get read tools — skip all write tools
+    if user_role == "guest":
+        return registry
 
     registry.register(ToolDefinition(
         name="create_task",
@@ -150,7 +164,6 @@ def build_registry_with_write_tools(
         handler=lambda **kwargs: write_tools.create_task(db, workspace_id, user_id, **kwargs),
         requires_confirm=True,
     ))
-
 
     registry.register(ToolDefinition(
         name="update_task_status",
@@ -185,7 +198,6 @@ def build_registry_with_write_tools(
         handler=lambda **kwargs: write_tools.update_task(db, workspace_id, user_id, **kwargs),
         requires_confirm=True,
     ))
-
 
     registry.register(ToolDefinition(
         name="assign_task",
@@ -230,5 +242,21 @@ def build_registry_with_write_tools(
         handler=lambda **kwargs: write_tools.delete_task(db, workspace_id, user_id, **kwargs),
         requires_confirm=True,
     ))
+
+    # Restore task: only for manager/superadmin
+    if _role_gte(user_role, "manager"):
+        registry.register(ToolDefinition(
+            name="restore_task",
+            description="Khôi phục task từ thùng rác. Chỉ manager/superadmin mới được phép. Chỉ gọi sau khi user xác nhận.",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "task_id": {"type": "string", "description": "UUID của task cần khôi phục"},
+                },
+                "required": ["task_id"],
+            },
+            handler=lambda **kwargs: write_tools.restore_task(db, workspace_id, user_id, user_role=user_role, **kwargs),
+            requires_confirm=True,
+        ))
 
     return registry

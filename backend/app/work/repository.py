@@ -87,7 +87,31 @@ class WorkRepository:
         await self.db.refresh(task)
         return task
 
-    async def _soft_delete_task_recursive(self, task: Task) -> None:
+    async def get_deleted_tasks(self, workspace_id: uuid.UUID, user_id: uuid.UUID | None = None) -> list[Task]:
+        """Return soft-deleted tasks. If user_id is given, filter to that user's tasks only."""
+        query = select(Task).where(Task.workspace_id == workspace_id, Task.is_deleted == True)
+        if user_id is not None:
+            query = query.where(Task.created_by == user_id)
+        query = query.order_by(Task.updated_at.desc())
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def restore_task(self, task: Task) -> Task:
+        """Restore a soft-deleted task (and its subtasks)."""
+        await self._restore_task_recursive(task)
+        await self.db.commit()
+        await self.db.refresh(task)
+        return task
+
+    async def _restore_task_recursive(self, task: Task) -> None:
+        task.is_deleted = False
+        task.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        result = await self.db.execute(select(Task).where(Task.parent_id == task.id))
+        subtasks = result.scalars().all()
+        for subtask in subtasks:
+            await self._restore_task_recursive(subtask)
+
+
         """Helper to recursively mark a task and its subtasks as deleted."""
         task.is_deleted = True
         task.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)

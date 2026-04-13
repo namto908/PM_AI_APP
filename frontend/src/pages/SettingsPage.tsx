@@ -3,10 +3,12 @@ import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import { useWorkspaceStore } from '../stores/workspaceStore';
 import client from '../api/client';
+import { adminApi, type AdminUser, type WorkspaceMember, type Group } from '../api/admin';
+import { usePermissions } from '../hooks/usePermissions';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SectionId = 'profile' | 'workspace' | 'notifications' | 'appearance' | 'security';
+type SectionId = 'profile' | 'workspace' | 'members' | 'groups' | 'admin_users' | 'notifications' | 'appearance' | 'security';
 
 interface WorkspaceInfo {
   id: string;
@@ -175,7 +177,7 @@ function PasswordInput({ label, value, onChange }: {
 const NOTIF_KEY = 'taskops-notif-prefs';
 const FONT_KEY  = 'taskops-font-size';
 
-const NAV_ITEMS: { id: SectionId; label: string; Icon: React.FC }[] = [
+const NAV_ITEMS_BASE: { id: SectionId; label: string; Icon: React.FC }[] = [
   { id: 'profile',       label: 'User Profile',   Icon: IconUser     },
   { id: 'workspace',     label: 'Workspace',       Icon: IconBuilding },
   { id: 'notifications', label: 'Notifications',   Icon: IconBell     },
@@ -183,15 +185,45 @@ const NAV_ITEMS: { id: SectionId; label: string; Icon: React.FC }[] = [
   { id: 'security',      label: 'Security & Keys', Icon: IconShield   },
 ];
 
+const ALL_SECTION_REFS: SectionId[] = ['profile', 'workspace', 'members', 'groups', 'admin_users', 'notifications', 'appearance', 'security'];
+
 export default function SettingsPage() {
   const { user, token, setAuth } = useAuthStore();
   const { theme, toggleTheme }   = useThemeStore();
   const { activeWorkspaceId }    = useWorkspaceStore();
+  const { canManageMembers, canCreateGroup, canManageUsers } = usePermissions();
+
+  // Build nav items dynamically based on permissions
+  const navItems = [
+    ...NAV_ITEMS_BASE.slice(0, 2),
+    ...(canManageMembers() ? [{ id: 'members' as SectionId, label: 'Members', Icon: IconUser }] : []),
+    ...(canCreateGroup()   ? [{ id: 'groups'  as SectionId, label: 'Groups',  Icon: IconBuilding }] : []),
+    ...(canManageUsers()   ? [{ id: 'admin_users' as SectionId, label: 'Users (Admin)', Icon: IconShield }] : []),
+    ...NAV_ITEMS_BASE.slice(2),
+  ];
 
   const [activeSection, setActiveSection] = useState<SectionId>('profile');
-  const sectionRefs = useRef<Record<SectionId, HTMLElement | null>>({
-    profile: null, workspace: null, notifications: null, appearance: null, security: null,
-  });
+  const sectionRefs = useRef<Record<SectionId, HTMLElement | null>>(
+    Object.fromEntries(ALL_SECTION_REFS.map(id => [id, null])) as Record<SectionId, HTMLElement | null>
+  );
+
+  // ── Members state ──
+  const [members, setMembers]               = useState<WorkspaceMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [addMemberEmail, setAddMemberEmail] = useState('');
+  const [addMemberRole, setAddMemberRole]   = useState('employee');
+  const [memberSaving, setMemberSaving]     = useState(false);
+  const [memberErr, setMemberErr]           = useState('');
+
+  // ── Groups state ──
+  const [groups, setGroups]             = useState<Group[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [groupSaving, setGroupSaving]   = useState(false);
+
+  // ── Admin users state ──
+  const [adminUsers, setAdminUsers]             = useState<AdminUser[]>([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
 
   // ── Profile ──
   const [profileName,   setProfileName]   = useState(user?.name  ?? '');
@@ -239,6 +271,36 @@ export default function SettingsPage() {
       })
       .catch(() => {});
   }, [activeWorkspaceId]);
+
+  // Load members when section becomes visible
+  useEffect(() => {
+    if (!activeWorkspaceId || !canManageMembers()) return;
+    setMembersLoading(true);
+    adminApi.listMembers(activeWorkspaceId)
+      .then(res => setMembers(res.data))
+      .catch(() => {})
+      .finally(() => setMembersLoading(false));
+  }, [activeWorkspaceId]);
+
+  // Load groups
+  useEffect(() => {
+    if (!activeWorkspaceId || !canCreateGroup()) return;
+    setGroupsLoading(true);
+    adminApi.listGroups(activeWorkspaceId)
+      .then(res => setGroups(res.data))
+      .catch(() => {})
+      .finally(() => setGroupsLoading(false));
+  }, [activeWorkspaceId]);
+
+  // Load admin users
+  useEffect(() => {
+    if (!canManageUsers()) return;
+    setAdminUsersLoading(true);
+    adminApi.listUsers()
+      .then(res => setAdminUsers(res.data))
+      .catch(() => {})
+      .finally(() => setAdminUsersLoading(false));
+  }, []);
 
   // Apply & persist font size
   useEffect(() => {
@@ -325,7 +387,7 @@ export default function SettingsPage() {
           Settings
         </p>
         <nav className="flex flex-col gap-0.5 px-3">
-          {NAV_ITEMS.map(({ id, label, Icon }) => {
+          {navItems.map(({ id, label, Icon }) => {
             const active = activeSection === id;
             return (
               <button
@@ -367,6 +429,16 @@ export default function SettingsPage() {
                 <p className="text-sm font-medium text-text1">{user?.name ?? '—'}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{user?.email ?? '—'}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Avatar auto-generated from initials</p>
+                {user?.system_role && (
+                  <span className={`inline-block mt-1.5 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                    user.system_role === 'superadmin' ? 'bg-[#ffb4ab]/20 text-[#ffb4ab]' :
+                    user.system_role === 'manager'    ? 'bg-[#b4c5ff]/20 text-[#b4c5ff]' :
+                    user.system_role === 'guest'      ? 'bg-slate-200 dark:bg-slate-700 text-slate-500' :
+                    'bg-[#6bd8cb]/20 text-[#6bd8cb]'
+                  }`}>
+                    {user.system_role}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -440,6 +512,197 @@ export default function SettingsPage() {
           </section>
 
           <Divider />
+
+          {/* ═══ Members ═══ */}
+          {canManageMembers() && (
+            <>
+              <section id="members" ref={el => { sectionRefs.current.members = el; }}>
+                <SectionHeader title="Members" subtitle="Manage workspace members and their roles" />
+                {membersLoading ? (
+                  <p className="text-sm text-slate-400 mt-4">Loading members…</p>
+                ) : (
+                  <div className="mt-4 rounded-xl bg-card border border-slate-200 dark:border-white/8 divide-y divide-slate-100 dark:divide-white/5">
+                    {members.length === 0 && <p className="px-5 py-4 text-sm text-slate-400">No members found.</p>}
+                    {members.map(m => (
+                      <div key={m.user_id} className="flex items-center gap-4 px-5 py-3.5">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text1 truncate">{m.user_id}</p>
+                          <p className="text-[11px] text-slate-400">Joined: {new Date(m.joined_at).toLocaleDateString()}</p>
+                        </div>
+                        <select
+                          value={m.role}
+                          disabled={m.role === 'owner'}
+                          onChange={async (e) => {
+                            if (!activeWorkspaceId) return;
+                            try {
+                              await adminApi.updateMemberRole(activeWorkspaceId, m.user_id, e.target.value);
+                              const res = await adminApi.listMembers(activeWorkspaceId);
+                              setMembers(res.data);
+                            } catch {}
+                          }}
+                          className="bg-input border border-slate-200 dark:border-transparent rounded-lg px-3 py-1.5 text-xs text-text1 focus:outline-none disabled:opacity-50"
+                        >
+                          {['owner', 'manager', 'employee', 'guest'].map(r => (
+                            <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                          ))}
+                        </select>
+                        {m.role !== 'owner' && (
+                          <button
+                            onClick={async () => {
+                              if (!activeWorkspaceId) return;
+                              try {
+                                await adminApi.removeMember(activeWorkspaceId, m.user_id);
+                                setMembers(prev => prev.filter(x => x.user_id !== m.user_id));
+                              } catch {}
+                            }}
+                            className="text-xs text-[#ffb4ab] hover:text-red-400 px-2 py-1 rounded-lg transition-colors"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-4 flex gap-2">
+                  <input
+                    type="text"
+                    value={addMemberEmail}
+                    onChange={e => setAddMemberEmail(e.target.value)}
+                    placeholder="User ID (UUID) to add…"
+                    className="flex-1 bg-input border border-slate-200 dark:border-transparent rounded-xl px-4 py-2.5 text-sm text-text1 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#6bd8cb]/30"
+                  />
+                  <select value={addMemberRole} onChange={e => setAddMemberRole(e.target.value)}
+                    className="bg-input border border-slate-200 dark:border-transparent rounded-xl px-3 py-2.5 text-sm text-text1 focus:outline-none">
+                    {['manager', 'employee', 'guest'].map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <button
+                    disabled={!addMemberEmail.trim() || memberSaving}
+                    onClick={async () => {
+                      if (!activeWorkspaceId || !addMemberEmail.trim()) return;
+                      setMemberSaving(true); setMemberErr('');
+                      try {
+                        await adminApi.addMember(activeWorkspaceId, addMemberEmail.trim(), addMemberRole);
+                        const res = await adminApi.listMembers(activeWorkspaceId);
+                        setMembers(res.data);
+                        setAddMemberEmail('');
+                      } catch (e: any) {
+                        setMemberErr(e.response?.data?.detail ?? 'Failed to add member');
+                      } finally { setMemberSaving(false); }
+                    }}
+                    className="bg-[#6bd8cb] text-[#003732] font-bold px-5 py-2.5 rounded-xl text-sm disabled:opacity-50 transition-all"
+                  >
+                    {memberSaving ? 'Adding…' : 'Add'}
+                  </button>
+                </div>
+                {memberErr && <p className="mt-2 text-xs text-[#ffb4ab]">{memberErr}</p>}
+              </section>
+              <Divider />
+            </>
+          )}
+
+          {/* ═══ Groups ═══ */}
+          {canCreateGroup() && (
+            <>
+              <section id="groups" ref={el => { sectionRefs.current.groups = el; }}>
+                <SectionHeader title="Groups" subtitle="Organise workspace members into groups" />
+                {groupsLoading ? (
+                  <p className="text-sm text-slate-400 mt-4">Loading groups…</p>
+                ) : (
+                  <div className="mt-4 rounded-xl bg-card border border-slate-200 dark:border-white/8 divide-y divide-slate-100 dark:divide-white/5">
+                    {groups.length === 0 && <p className="px-5 py-4 text-sm text-slate-400">No groups yet.</p>}
+                    {groups.map(g => (
+                      <div key={g.id} className="flex items-center gap-4 px-5 py-3.5">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text1">{g.name}</p>
+                          <p className="text-[11px] text-slate-400">ID: {g.id}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-4 flex gap-2">
+                  <input
+                    type="text"
+                    value={newGroupName}
+                    onChange={e => setNewGroupName(e.target.value)}
+                    placeholder="New group name…"
+                    className="flex-1 bg-input border border-slate-200 dark:border-transparent rounded-xl px-4 py-2.5 text-sm text-text1 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#6bd8cb]/30"
+                  />
+                  <button
+                    disabled={!newGroupName.trim() || groupSaving}
+                    onClick={async () => {
+                      if (!activeWorkspaceId || !newGroupName.trim()) return;
+                      setGroupSaving(true);
+                      try {
+                        const res = await adminApi.createGroup(activeWorkspaceId, newGroupName.trim());
+                        setGroups(prev => [res.data, ...prev]);
+                        setNewGroupName('');
+                      } catch {} finally { setGroupSaving(false); }
+                    }}
+                    className="bg-[#6bd8cb] text-[#003732] font-bold px-5 py-2.5 rounded-xl text-sm disabled:opacity-50 transition-all"
+                  >
+                    {groupSaving ? 'Creating…' : 'Create'}
+                  </button>
+                </div>
+              </section>
+              <Divider />
+            </>
+          )}
+
+          {/* ═══ Admin: Users ═══ */}
+          {canManageUsers() && (
+            <>
+              <section id="admin_users" ref={el => { sectionRefs.current.admin_users = el; }}>
+                <SectionHeader title="Users (Admin)" subtitle="View and manage all user accounts and system roles" />
+                {adminUsersLoading ? (
+                  <p className="text-sm text-slate-400 mt-4">Loading users…</p>
+                ) : (
+                  <div className="mt-4 rounded-xl bg-card border border-slate-200 dark:border-white/8 divide-y divide-slate-100 dark:divide-white/5">
+                    {adminUsers.length === 0 && <p className="px-5 py-4 text-sm text-slate-400">No users found.</p>}
+                    {adminUsers.map(u => (
+                      <div key={u.id} className="flex items-center gap-4 px-5 py-3.5">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text1">{u.name}</p>
+                          <p className="text-[11px] text-slate-400">{u.email}</p>
+                        </div>
+                        <select
+                          value={u.system_role}
+                          onChange={async (e) => {
+                            try {
+                              await adminApi.updateUser(u.id, { system_role: e.target.value });
+                              setAdminUsers(prev => prev.map(x => x.id === u.id ? { ...x, system_role: e.target.value } : x));
+                            } catch {}
+                          }}
+                          className="bg-input border border-slate-200 dark:border-transparent rounded-lg px-3 py-1.5 text-xs text-text1 focus:outline-none"
+                        >
+                          {['superadmin', 'manager', 'employee', 'guest'].map(r => (
+                            <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await adminApi.updateUser(u.id, { is_active: u.is_active === false });
+                              setAdminUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_active: u.is_active === false } : x));
+                            } catch {}
+                          }}
+                          className={`text-xs px-3 py-1.5 rounded-lg transition-colors font-medium ${
+                            u.is_active === false
+                              ? 'bg-[#6bd8cb]/10 text-[#6bd8cb] hover:bg-[#6bd8cb]/20'
+                              : 'bg-red-500/10 text-[#ffb4ab] hover:bg-red-500/20'
+                          }`}
+                        >
+                          {u.is_active === false ? 'Activate' : 'Deactivate'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+              <Divider />
+            </>
+          )}
 
           {/* ═══ 3. Notifications ═══ */}
           <section id="notifications" ref={el => { sectionRefs.current.notifications = el; }}>

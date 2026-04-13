@@ -95,4 +95,10 @@ export const tasksApi = {
 
   getActivities: (workspaceId: string, taskId: string) =>
     client.get<TaskActivity[]>(`/workspaces/${workspaceId}/tasks/${taskId}/activities`),
+
+  listTrash: (workspaceId: string) =>
+    client.get<Task[]>(`/workspaces/${workspaceId}/tasks/trash`),
+
+  restore: (workspaceId: string, taskId: string) =>
+    client.post<Task>(`/workspaces/${workspaceId}/tasks/${taskId}/restore`),
 };

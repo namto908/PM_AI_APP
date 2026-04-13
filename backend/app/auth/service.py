@@ -49,7 +49,7 @@ class AuthService:
         await self.db.commit()
         await self.db.refresh(user)
 
-        token = _create_token({"user_id": str(user.id), "email": user.email})
+        token = _create_token({"user_id": str(user.id), "email": user.email, "system_role": user.system_role})
         return TokenResponse(access_token=token)
 
     async def login(self, body: LoginRequest) -> TokenResponse:
@@ -64,7 +64,7 @@ class AuthService:
         if not user.is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account disabled")
 
-        token = _create_token({"user_id": str(user.id), "email": user.email})
+        token = _create_token({"user_id": str(user.id), "email": user.email, "system_role": user.system_role})
         return TokenResponse(access_token=token)
 
     async def get_me(self, user_id: str) -> User:

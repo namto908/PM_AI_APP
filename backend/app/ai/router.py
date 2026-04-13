@@ -41,6 +41,7 @@ async def chat(
 ):
     """SSE streaming endpoint for AI chat."""
     user_id = uuid.UUID(current_user["user_id"])
+    user_role = current_user.get("system_role", "employee")
 
     # Parse confirm response from user
     message_lower = body.message.strip().lower()
@@ -56,7 +57,7 @@ async def chat(
 
     async def event_stream():
         try:
-            orchestrator = AgentOrchestrator(db, workspace_id, user_id)
+            orchestrator = AgentOrchestrator(db, workspace_id, user_id, user_role=user_role)
             async for chunk in orchestrator.run(
                 user_message=body.message,
                 conversation_id=body.conversation_id,

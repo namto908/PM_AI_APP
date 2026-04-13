@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Plus, X, MoreHorizontal, Calendar, Zap, AlertTriangle, ChevronDown,
-  Filter, Kanban, List, CheckSquare,
+  Filter, Kanban, List, CheckSquare, Trash2, RotateCcw,
 } from 'lucide-react';
 import { DndContext, DragOverlay, closestCorners, useDraggable, useDroppable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
@@ -10,6 +10,7 @@ import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useTasks } from '@/hooks/useTasks';
 import { tasksApi, type Task, type TaskCreate } from '@/api/tasks';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
+import { usePermissions } from '@/hooks/usePermissions';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -256,12 +257,17 @@ function CreateTaskModal({ workspaceId, onCreated, onClose }: {
 
 export default function TasksPage() {
   const workspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
-  const [view, setView] = useState<'kanban' | 'list'>('kanban');
+  const [view, setView] = useState<'kanban' | 'list' | 'trash'>('kanban');
   const [createOpen, setCreateOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [filterPriority, setFilterPriority] = useState('');
   const [draggingTask, setDraggingTask] = useState<Task | null>(null);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, Task['status']>>({});
+  const [trashTasks, setTrashTasks] = useState<Task[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const { canRestoreTask, canWriteTasks } = usePermissions();
 
   // Require 8px movement before drag activates — preserves click-to-open behavior
   const sensors = useSensors(
@@ -311,6 +317,36 @@ export default function TasksPage() {
     }
   };
 
+  const loadTrash = async () => {
+    if (!workspaceId) return;
+    setTrashLoading(true);
+    try {
+      const res = await tasksApi.listTrash(workspaceId);
+      setTrashTasks(res.data);
+    } catch {
+      setTrashTasks([]);
+    } finally {
+      setTrashLoading(false);
+    }
+  };
+
+  const handleRestoreTask = async (taskId: string) => {
+    if (!workspaceId) return;
+    setRestoringId(taskId);
+    try {
+      await tasksApi.restore(workspaceId, taskId);
+      await loadTrash();
+      await refetch();
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
+  const handleViewChange = (v: 'kanban' | 'list' | 'trash') => {
+    setView(v);
+    if (v === 'trash') loadTrash();
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden p-6">
       {/* Page Header */}
@@ -321,7 +357,7 @@ export default function TasksPage() {
         </div>
         <div className="flex items-center bg-card p-1 rounded-xl">
           {(['kanban', 'list'] as const).map((v) => (
-            <button key={v} onClick={() => setView(v)}
+            <button key={v} onClick={() => handleViewChange(v)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                 view === v ? 'bg-input text-[#6bd8cb] shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}>
@@ -329,41 +365,52 @@ export default function TasksPage() {
               <span className="text-xs font-bold uppercase tracking-wider">{v}</span>
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 mb-6 bg-card/50 p-3 rounded-2xl flex-shrink-0">
-        <div className="relative flex items-center gap-2 px-3 py-2 bg-card2 rounded-xl text-sm border border-slate-200 dark:border-slate-800/20">
-          <span className="text-slate-600 dark:text-slate-500 text-[10px] font-bold uppercase tracking-tighter">Priority:</span>
-          <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
-            className="bg-transparent border-none text-text1 text-xs focus:outline-none cursor-pointer pr-4 appearance-none">
-            <option value="">All</option>
-            {PRIORITIES.map((p) => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
-          </select>
-          <ChevronDown size={12} className="text-slate-400 dark:text-slate-500 pointer-events-none absolute right-2" />
-        </div>
-
-        <div className="flex items-center gap-2 px-3 py-2 bg-card2 rounded-xl text-sm border border-slate-200 dark:border-slate-800/20">
-          <span className="text-slate-600 dark:text-slate-500 text-[10px] font-bold uppercase tracking-tighter">Due Date:</span>
-          <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
-        </div>
-
-        <div className="ml-auto flex items-center gap-3">
-          {filterPriority && (
-            <button onClick={() => setFilterPriority('')}
-              className="flex items-center gap-2 text-slate-400 hover:text-text1 px-3 py-2 text-sm transition-colors">
-              <Filter size={16} /> Clear Filters
-            </button>
-          )}
-          <button onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-2 bg-[#6bd8cb] text-[#003732] font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#6bd8cb]/10 hover:shadow-[#6bd8cb]/20 transition-all">
-            <Plus size={16} /> Create Task
+          <button onClick={() => handleViewChange('trash')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              view === 'trash' ? 'bg-input text-[#ffb4ab] shadow-lg' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}>
+            <Trash2 size={14} />
+            <span className="text-xs font-bold uppercase tracking-wider">Trash</span>
           </button>
         </div>
       </div>
 
-      {loading && (
+      {/* Filter Bar — hide when viewing trash */}
+      {view !== 'trash' && (
+        <div className="flex flex-wrap items-center gap-3 mb-6 bg-card/50 p-3 rounded-2xl flex-shrink-0">
+          <div className="relative flex items-center gap-2 px-3 py-2 bg-card2 rounded-xl text-sm border border-slate-200 dark:border-slate-800/20">
+            <span className="text-slate-600 dark:text-slate-500 text-[10px] font-bold uppercase tracking-tighter">Priority:</span>
+            <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
+              className="bg-transparent border-none text-text1 text-xs focus:outline-none cursor-pointer pr-4 appearance-none">
+              <option value="">All</option>
+              {PRIORITIES.map((p) => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+            </select>
+            <ChevronDown size={12} className="text-slate-400 dark:text-slate-500 pointer-events-none absolute right-2" />
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-2 bg-card2 rounded-xl text-sm border border-slate-200 dark:border-slate-800/20">
+            <span className="text-slate-600 dark:text-slate-500 text-[10px] font-bold uppercase tracking-tighter">Due Date:</span>
+            <Calendar size={12} className="text-slate-400 dark:text-slate-500" />
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            {filterPriority && (
+              <button onClick={() => setFilterPriority('')}
+                className="flex items-center gap-2 text-slate-400 hover:text-text1 px-3 py-2 text-sm transition-colors">
+                <Filter size={16} /> Clear Filters
+              </button>
+            )}
+            {canWriteTasks() && (
+              <button onClick={() => setCreateOpen(true)}
+                className="flex items-center gap-2 bg-[#6bd8cb] text-[#003732] font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-[#6bd8cb]/10 hover:shadow-[#6bd8cb]/20 transition-all">
+                <Plus size={16} /> Create Task
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {loading && view !== 'trash' && (
         <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
           <div className="w-4 h-4 border-2 border-[#6bd8cb] border-t-transparent rounded-full animate-spin" />
           Loading tasks...
@@ -385,7 +432,7 @@ export default function TasksPage() {
                 <KanbanColumn key={col.key} col={col} tasks={byStatus[col.key] ?? []}
                   activeId={activeTask?.id ?? null}
                   onCardClick={handleCardClick}
-                  onAddClick={() => setCreateOpen(true)}
+                  onAddClick={() => canWriteTasks() && setCreateOpen(true)}
                 />
               ))}
             </div>
@@ -405,9 +452,11 @@ export default function TasksPage() {
             {tasks.length === 0 && !loading && (
               <div className="py-16 text-center">
                 <p className="text-sm text-slate-500">No tasks yet.</p>
-                <button onClick={() => setCreateOpen(true)} className="mt-3 text-sm text-[#6bd8cb] hover:underline">
-                  Create your first task
-                </button>
+                {canWriteTasks() && (
+                  <button onClick={() => setCreateOpen(true)} className="mt-3 text-sm text-[#6bd8cb] hover:underline">
+                    Create your first task
+                  </button>
+                )}
               </div>
             )}
             {tasks.map((t) => (
@@ -417,7 +466,64 @@ export default function TasksPage() {
         </div>
       )}
 
-      {activeTask && workspaceId && (
+      {/* Trash */}
+      {view === 'trash' && (
+        <div className="flex-1 overflow-auto">
+          <div className="mb-4 flex items-center gap-3">
+            <Trash2 size={16} className="text-[#ffb4ab]" />
+            <h3 className="text-sm font-bold text-text1">
+              {canRestoreTask() ? 'All deleted tasks (you can restore)' : 'Your deleted tasks'}
+            </h3>
+            <button onClick={loadTrash} className="ml-auto text-xs text-slate-400 hover:text-text1 transition-colors px-3 py-1.5 rounded-lg bg-card2">
+              Refresh
+            </button>
+          </div>
+
+          {trashLoading && (
+            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+              <div className="w-4 h-4 border-2 border-[#ffb4ab] border-t-transparent rounded-full animate-spin" />
+              Loading trash...
+            </div>
+          )}
+
+          {!trashLoading && trashTasks.length === 0 && (
+            <div className="py-16 text-center bg-card rounded-2xl border border-slate-200 dark:border-slate-800/20">
+              <Trash2 size={32} className="mx-auto text-slate-400 dark:text-slate-600 mb-3" />
+              <p className="text-sm text-slate-500">Trash is empty.</p>
+            </div>
+          )}
+
+          {!trashLoading && trashTasks.length > 0 && (
+            <div className="bg-card rounded-2xl border border-slate-800/20 divide-y divide-slate-800/30 overflow-hidden">
+              {trashTasks.map((t) => (
+                <div key={t.id} className="flex items-center gap-4 px-5 py-3.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-text1 truncate line-through opacity-60">{t.title}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      Deleted: {new Date(t.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex-shrink-0 ${PRIORITY_TAG[t.priority]}`}>
+                    {t.priority}
+                  </span>
+                  {canRestoreTask() && (
+                    <button
+                      onClick={() => handleRestoreTask(t.id)}
+                      disabled={restoringId === t.id}
+                      className="flex items-center gap-1.5 text-[11px] font-semibold text-[#6bd8cb] hover:text-[#4ec9bc] px-3 py-1.5 rounded-lg bg-[#6bd8cb]/10 hover:bg-[#6bd8cb]/20 transition-all disabled:opacity-50"
+                    >
+                      <RotateCcw size={12} className={restoringId === t.id ? 'animate-spin' : ''} />
+                      {restoringId === t.id ? 'Restoring...' : 'Restore'}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTask && workspaceId && view !== 'trash' && (
         <>
           <div 
             className="fixed inset-0 bg-black/5 z-40 backdrop-blur-[1px] animate-in fade-in duration-300"
@@ -430,7 +536,7 @@ export default function TasksPage() {
         </>
       )}
 
-      {createOpen && workspaceId && (
+      {createOpen && workspaceId && canWriteTasks() && (
         <CreateTaskModal workspaceId={workspaceId} onCreated={refetch} onClose={() => setCreateOpen(false)} />
       )}
     </div>

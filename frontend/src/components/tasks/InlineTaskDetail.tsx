@@ -117,12 +117,16 @@ export function InlineTaskDetail({ task, workspaceId }: {
           {/* Metadata Cards */}
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-surface p-4 rounded-xl border border-outline-variant flex flex-col justify-center shadow-sm">
-              <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mb-1">Assignee</div>
+              <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mb-1">Owner</div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                  {task.assignee_id ? 'A' : '—'}
-                </div>
-                <span className="text-sm font-medium text-on-surface">{task.assignee_id ? 'Assigned' : 'Unassigned'}</span>
+                {task.creator_avatar ? (
+                  <img src={task.creator_avatar} alt="avatar" className="w-6 h-6 rounded-full object-cover" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                    {task.creator_name ? task.creator_name.charAt(0).toUpperCase() : '—'}
+                  </div>
+                )}
+                <span className="text-sm font-medium text-on-surface">{task.creator_name || 'Unknown'}</span>
               </div>
             </div>
             <div className="bg-surface p-4 rounded-xl border border-outline-variant flex flex-col justify-center shadow-sm">

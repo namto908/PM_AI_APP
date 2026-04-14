@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckSquare, Share2, Trash2, X, Calendar, MoreHorizontal, MessageSquare, Send } from 'lucide-react';
+import { CheckSquare, Share2, Trash2, X, Calendar, MoreHorizontal, MessageSquare, Send, RefreshCw, Edit2, Check, Lock } from 'lucide-react';
 import { tasksApi, type Task, type TaskComment, type TaskActivity } from '@/api/tasks';
+import { useAuthStore } from '@/stores/authStore';
+import { adminApi, type WorkspaceInfo } from '@/api/admin';
 
 const PRIORITY_TAG: Record<string, string> = {
   low:    'bg-surface-container-highest text-on-surface-variant font-black',
@@ -72,6 +74,13 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [addingSubtask, setAddingSubtask] = useState(false);
   
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [tempDesc, setTempDesc] = useState(task.description || '');
+  const [savingDesc, setSavingDesc] = useState(false);
+  
+  const [userRoleInWs, setUserRoleInWs] = useState<string | null>(null);
+  const user = useAuthStore(s => s.user);
+  
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const fetchSubtasks = async () => {
@@ -95,12 +104,22 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
     } catch {}
   };
 
+  const fetchUserRole = async () => {
+    try {
+      const { data } = await adminApi.listWorkspaces();
+      const ws = data.find((w: WorkspaceInfo) => w.id === workspaceId);
+      if (ws) setUserRoleInWs(ws.role || null);
+    } catch {}
+  };
+
   useEffect(() => {
     setLoadingComments(true);
+    setTempDesc(task.description || '');
     Promise.all([
       fetchComments(),
       fetchActivities(),
-      fetchSubtasks()
+      fetchSubtasks(),
+      fetchUserRole()
     ]).finally(() => setLoadingComments(false));
   }, [workspaceId, task.id]);
 
@@ -162,6 +181,41 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
       await tasksApi.delete(workspaceId, subtaskId);
     } catch {
       fetchSubtasks(); // Re-fetch on error to reset
+    }
+  };
+
+  const currentUserId = user?.id;
+  const isCreator = task.created_by === currentUserId;
+  const isSystemManager = user?.system_role === 'superadmin' || user?.system_role === 'manager';
+  const isWsManager = userRoleInWs === 'owner' || userRoleInWs === 'manager';
+  const canModify = isCreator || isSystemManager || isWsManager;
+
+  const handleUpdateDescription = async () => {
+    if (tempDesc === task.description) {
+      setIsEditingDesc(false);
+      return;
+    }
+    setSavingDesc(true);
+    try {
+      await tasksApi.update(workspaceId, task.id, { description: tempDesc });
+      setIsEditingDesc(false);
+      onUpdated();
+      fetchActivities();
+    } catch (err: any) {
+      alert(err.response?.data?.detail ?? 'Failed to update description');
+    } finally {
+      setSavingDesc(false);
+    }
+  };
+
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (!canModify) return;
+    try {
+      await tasksApi.update(workspaceId, task.id, { status: newStatus as any });
+      onUpdated();
+      fetchActivities();
+    } catch (err: any) {
+      alert(err.response?.data?.detail ?? 'Failed to update status');
     }
   };
 
@@ -234,10 +288,15 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
           <h1 className="font-bold text-2xl text-on-surface leading-[1.2] mb-5 font-headline">{task.title}</h1>
           <div className="flex items-center gap-5 text-sm text-on-surface-variant/70">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                {task.assignee_id ? 'A' : '—'}
-              </div>
-              <span className="font-bold text-on-surface">{task.assignee_id ? 'Assigned' : 'Unassigned'}</span>
+              <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-black mr-1">Owner</div>
+              {task.creator_avatar ? (
+                <img src={task.creator_avatar} alt="avatar" className="w-6 h-6 rounded-full object-cover shadow-sm ring-1 ring-outline-variant/30" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shadow-sm">
+                  {task.creator_name ? task.creator_name.charAt(0).toUpperCase() : '—'}
+                </div>
+              )}
+              <span className="font-bold text-on-surface">{task.creator_name || 'Unknown'}</span>
             </div>
             <div className="w-1.5 h-1.5 rounded-full bg-outline-variant/30" />
             <div 
@@ -275,16 +334,74 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
 
         <div className="space-y-6">
           <div className="bg-surface-container/30 p-5 rounded-2xl border border-outline-variant/30 shadow-sm">
-            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3">Status</h5>
-            <p className="text-sm text-on-surface font-bold">{statusLabel[task.status] ?? task.status}</p>
+            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3 flex justify-between items-center">
+              Status
+              {!canModify && <Lock size={10} className="text-on-surface-variant/30" />}
+            </h5>
+            {canModify ? (
+              <select
+                value={task.status}
+                onChange={(e) => handleUpdateStatus(e.target.value)}
+                className="bg-transparent border-none p-0 text-sm font-bold text-on-surface focus:ring-0 cursor-pointer w-full"
+              >
+                {Object.entries(statusLabel).map(([val, label]) => (
+                  <option key={val} value={val} className="bg-surface-container text-sm">{label}</option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-sm text-on-surface font-bold">{statusLabel[task.status] ?? task.status}</p>
+            )}
           </div>
 
-          {task.description && (
-            <div className="bg-surface-container/30 p-5 rounded-2xl border border-outline-variant/30 shadow-sm">
-              <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3">Description</h5>
-              <p className="text-sm text-on-surface leading-loose text-pretty">{task.description}</p>
-            </div>
-          )}
+          <div className="bg-surface-container/30 p-5 rounded-2xl border border-outline-variant/30 shadow-sm relative group/desc">
+            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3 flex justify-between items-center">
+              Description
+              {canModify && !isEditingDesc && (
+                <button 
+                  onClick={() => setIsEditingDesc(true)}
+                  className="opacity-0 group-hover/desc:opacity-100 transition-opacity p-1 hover:bg-surface-container rounded"
+                >
+                  <Edit2 size={12} />
+                </button>
+              )}
+              {!canModify && <Lock size={10} className="text-on-surface-variant/30" />}
+            </h5>
+            
+            {isEditingDesc ? (
+              <div className="space-y-3">
+                <textarea
+                  value={tempDesc}
+                  onChange={(e) => setTempDesc(e.target.value)}
+                  autoFocus
+                  className="w-full bg-surface-container border border-outline-variant rounded-xl p-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[120px] resize-none"
+                  placeholder="Task background, scope, or key details..."
+                />
+                <div className="flex justify-end gap-2">
+                  <button 
+                    onClick={() => { setIsEditingDesc(false); setTempDesc(task.description || ''); }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleUpdateDescription}
+                    disabled={savingDesc}
+                    className="px-4 py-1.5 bg-primary text-on-primary-fixed rounded-lg text-xs font-black shadow-lg shadow-primary/10 hover:brightness-110 transition-all flex items-center gap-1.5"
+                  >
+                    {savingDesc ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
+                    Save Change
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p 
+                className={`text-sm text-on-surface leading-loose text-pretty ${canModify ? 'cursor-pointer' : ''}`}
+                onClick={() => canModify && setIsEditingDesc(true)}
+              >
+                {task.description || <span className="text-on-surface-variant/30 italic">No description provided</span>}
+              </p>
+            )}
+          </div>
 
           {/* Subtasks Section */}
           <div className="bg-surface-container/30 p-6 rounded-2xl border border-outline-variant/30 shadow-sm">
@@ -306,46 +423,58 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
               {subtasks.map(st => {
                 const isDone = st.status === 'done';
                 return (
-                  <div key={st.id} className="flex items-center gap-4 p-3.5 bg-surface-container/40 hover:bg-surface-container/70 border border-outline-variant/40 transition-all rounded-xl group cursor-pointer shadow-sm hover:shadow-md" onClick={() => toggleSubtaskStatus(st)}>
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isDone ? 'bg-primary text-on-primary-fixed shadow-md shadow-primary/20' : 'border-2 border-outline-variant/60 group-hover:border-primary text-transparent group-hover:text-primary/40'}`}>
+                  <div key={st.id} className={`flex items-center gap-4 p-3.5 bg-surface-container/40 hover:bg-surface-container/70 border border-outline-variant/40 transition-all rounded-xl group overflow-hidden shadow-sm hover:shadow-md ${canModify ? 'cursor-pointer' : ''}`} onClick={() => canModify && toggleSubtaskStatus(st)}>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isDone ? 'bg-primary text-on-primary-fixed shadow-md shadow-primary/20' : 'border-2 border-outline-variant/60 text-transparent' + (canModify ? ' group-hover:border-primary group-hover:text-primary/40' : '')}`}>
                       {isDone ? <CheckSquare size={14} strokeWidth={3} /> : <CheckSquare size={14} />}
                     </div>
                     <span className={`flex-1 text-sm transition-colors ${isDone ? 'text-on-surface-variant/50 line-through' : 'text-on-surface font-bold'}`}>
                       {st.title}
                     </span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); deleteSubtask(st.id); }}
-                      className="text-on-surface-variant/40 hover:text-error opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-error/10 rounded-lg"
-                      title="Delete Subtask"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {canModify && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); deleteSubtask(st.id); }}
+                        className="text-on-surface-variant/40 hover:text-error opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-error/10 rounded-lg flex-shrink-0"
+                        title="Delete Subtask"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 );
               })}
+
               
-              <form onSubmit={handleCreateSubtask} className="flex items-center gap-4 p-3.5 bg-surface-container/20 rounded-xl border-l-[3px] border-primary ring-1 ring-primary/10 focus-within:ring-primary/50 transition-all shadow-inner">
-                <div className="w-6 h-6 rounded-lg border-2 border-outline-variant/30 flex items-center justify-center"></div>
-                <input 
-                  type="text"
-                  value={newSubtaskTitle}
-                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface font-bold p-0 text-sm placeholder:text-on-surface-variant/30" 
-                  placeholder="New subtask objective..." 
-                />
-                <button 
-                  type="submit"
-                  disabled={!newSubtaskTitle.trim() || addingSubtask}
-                  className="px-4 py-2 bg-primary text-on-primary-fixed rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
-                >
-                  Add
-                </button>
-              </form>
+              {canModify && (
+                <form onSubmit={handleCreateSubtask} className="flex items-center gap-4 p-3.5 bg-surface-container/20 rounded-xl border-l-[3px] border-primary ring-1 ring-primary/10 focus-within:ring-primary/50 transition-all shadow-inner">
+                  <div className="w-6 h-6 rounded-lg border-2 border-outline-variant/30 flex items-center justify-center"></div>
+                  <input 
+                    type="text"
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface font-bold p-0 text-sm placeholder:text-on-surface-variant/30" 
+                    placeholder="New subtask objective..." 
+                  />
+                  <button 
+                    type="submit"
+                    disabled={!newSubtaskTitle.trim() || addingSubtask}
+                    className="px-4 py-2 bg-primary text-on-primary-fixed rounded-xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-primary/20"
+                  >
+                    Add
+                  </button>
+                </form>
+              )}
             </div>
           </div>
 
           <div className="bg-surface-container/30 p-5 rounded-2xl border border-outline-variant/30 shadow-sm space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 mb-3">System Metadata</h5>
+            <div className="flex justify-between items-center text-xs text-on-surface-variant">
+              <span>Creator</span>
+              <div className="flex items-center gap-2">
+                {task.creator_avatar && <img src={task.creator_avatar} alt="" className="w-4 h-4 rounded-full" />}
+                <span className="font-bold text-on-surface">{task.creator_name || 'System'}</span>
+              </div>
+            </div>
             <div className="flex justify-between text-xs text-on-surface-variant"><span>Created</span><span className="font-mono text-[10px]">{fmtDate(task.created_at)}</span></div>
             <div className="flex justify-between text-xs text-on-surface-variant"><span>Last Updated</span><span className="font-mono text-[10px]">{fmtDate(task.updated_at)}</span></div>
             {task.tags.length > 0 && (
@@ -400,15 +529,19 @@ export function TaskDetailPanel({ task, workspaceId, onClose, onUpdated }: {
                       </div>
                     )}
 
-                    <div className="relative mt-10">
-                      <span className="absolute -left-6 top-0 w-4 h-4 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shadow-[0_0_10px_rgba(107,216,203,0.4)]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      </span>
-                      <div className="text-xs">
-                        <span className="font-black text-on-surface uppercase tracking-wider text-[10px]">Project originated</span>
-                        <p className="text-[10px] text-on-surface-variant/40 mt-1.5 font-mono">{fmtDate(task.created_at)}</p>
+                      <div className="relative mt-10">
+                        <span className="absolute -left-6 top-0 w-4 h-4 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center shadow-[0_0_10px_rgba(107,216,203,0.4)]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        </span>
+                        <div className="text-xs">
+                          <span className="font-black text-on-surface uppercase tracking-wider text-[10px]">Project originated</span>
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            {task.creator_avatar && <img src={task.creator_avatar} alt="" className="w-3.5 h-3.5 rounded-full" />}
+                            <span className="text-[10px] text-on-surface font-black">{task.creator_name || 'System'}</span>
+                            <span className="text-[10px] text-on-surface-variant/40 font-mono">- {fmtDate(task.created_at)}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
                   </>
                 );
               })()}

@@ -10,6 +10,9 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'in_review' | 'done';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignee_id: string | null;
+  created_by: string | null;
+  creator_name: string | null;
+  creator_avatar: string | null;
   due_date: string | null;
   tags: string[];
   created_at: string;
@@ -26,6 +29,8 @@ export interface PaginatedTasks {
 export interface TaskFilter {
   status?: string;
   priority?: string;
+  assignee_id?: string;
+  created_by?: string;
   project_id?: string;
   parent_id?: string;
   top_level_only?: boolean;

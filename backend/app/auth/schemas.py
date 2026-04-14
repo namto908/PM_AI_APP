@@ -91,7 +91,9 @@ class WorkspaceResponse(BaseModel):
     id: uuid.UUID
     name: str
     slug: str
-    role: str
+    role: str | None = None
+    owner_name: str | None = None
+    owner_email: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -138,6 +140,8 @@ class WorkspaceMemberAdd(BaseModel):
 
 class WorkspaceMemberResponse(BaseModel):
     user_id: uuid.UUID
+    name: str | None = None
+    email: str | None = None
     role: str
     joined_at: str
 
@@ -147,6 +151,8 @@ class WorkspaceMemberResponse(BaseModel):
 # ── Admin schemas ──────────────────────────────────────────────────────────────
 
 class AdminUserUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
     system_role: str | None = None
     is_active: bool | None = None
 

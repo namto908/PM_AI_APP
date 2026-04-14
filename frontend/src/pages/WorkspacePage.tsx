@@ -13,14 +13,15 @@ import { useWorkspaceStore } from '@/stores/workspaceStore';
 const ROLE_ORDER = ['guest', 'employee', 'manager', 'owner'];
 
 const ROLE_BADGES: Record<string, { label: string; color: string; bg: string }> = {
-  owner:    { label: 'Owner',    color: 'text-amber-400', bg: 'bg-amber-400/10 border border-amber-400/20' },
-  manager:  { label: 'Manager',  color: 'text-teal-400',  bg: 'bg-teal-400/10 border border-teal-400/20' },
-  employee: { label: 'Employee', color: 'text-sky-400',   bg: 'bg-sky-400/10 border border-sky-400/20' },
-  guest:    { label: 'Guest',    color: 'text-slate-400', bg: 'bg-slate-400/10 border border-slate-400/20' },
+  owner:       { label: 'Owner',      color: 'text-amber-400',  bg: 'bg-amber-400/10 border border-amber-400/20' },
+  manager:     { label: 'Manager',    color: 'text-teal-400',   bg: 'bg-teal-400/10 border border-teal-400/20' },
+  employee:    { label: 'Employee',   color: 'text-sky-400',    bg: 'bg-sky-400/10 border border-sky-400/20' },
+  guest:       { label: 'Guest',      color: 'text-slate-400',  bg: 'bg-slate-400/10 border border-slate-400/20' },
+  superadmin:  { label: 'Superadmin', color: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10 border border-fuchsia-400/20' },
 };
 
-function RoleBadge({ role }: { role: string }) {
-  const cfg = ROLE_BADGES[role];
+function RoleBadge({ role }: { role?: string }) {
+  const cfg = role ? ROLE_BADGES[role] : null;
   if (!cfg) return <span className="text-[10px] text-slate-500">{role}</span>;
   return (
     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${cfg.bg} ${cfg.color}`}>
@@ -50,7 +51,10 @@ export default function WorkspacePage() {
   const [allUsers, setAllUsers] = useState<AdminUser[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [memberActionLoading, setMemberActionLoading] = useState<string | null>(null);
-  const [addMemberId, setAddMemberId] = useState('');
+  
+  // Invitation Modal State
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
   const [addMemberRole, setAddMemberRole] = useState('employee');
 
   // ── Fetch Workspaces ──
@@ -70,7 +74,7 @@ export default function WorkspacePage() {
       const { data } = await adminApi.listMembers(activeWorkspaceId);
       setMembers(data);
       
-      // Also fetch users to enrich names (Superadmin can see all, Manager sees team)
+      // Still fetch all available users for the search modal
       const usersRes = user?.system_role === 'superadmin' 
         ? await adminApi.listUsers() 
         : await adminApi.listTeamUsers();
@@ -96,12 +100,11 @@ export default function WorkspacePage() {
     } finally { setCreateLoading(false); }
   };
 
-  const handleAddMember = async () => {
-    if (!activeWorkspaceId || !addMemberId) return;
+  const handleAddMember = async (userId: string) => {
+    if (!activeWorkspaceId) return;
     setMembersLoading(true);
     try {
-      await adminApi.addMember(activeWorkspaceId, addMemberId, addMemberRole);
-      setAddMemberId('');
+      await adminApi.addMember(activeWorkspaceId, userId, addMemberRole);
       await fetchMembers();
     } catch (err: any) {
       alert(err.response?.data?.detail ?? 'Failed to add member');
@@ -126,13 +129,17 @@ export default function WorkspacePage() {
     } catch { /* err */ } finally { setMemberActionLoading(null); }
   };
 
-  // Enrich members with user names/emails
-  const enrichedMembers = useMemo(() => {
-    return members.map(m => {
-      const u = allUsers.find(au => au.id === m.user_id);
-      return { ...m, name: u?.name ?? 'Unknown', email: u?.email ?? '---' };
-    });
-  }, [members, allUsers]);
+  // Search results for invitation
+  const inviteResults = useMemo(() => {
+    if (!inviteSearch.trim()) return [];
+    return allUsers
+      .filter(u => !members.some(m => m.user_id === u.id))
+      .filter(u => 
+        u.name.toLowerCase().includes(inviteSearch.toLowerCase()) || 
+        u.email.toLowerCase().includes(inviteSearch.toLowerCase())
+      )
+      .slice(0, 5);
+  }, [allUsers, members, inviteSearch]);
 
   const activeWs = workspaces.find(w => w.id === activeWorkspaceId);
   const isOwner = activeWs?.role === 'owner' || user?.system_role === 'superadmin';
@@ -227,7 +234,14 @@ export default function WorkspacePage() {
                     <RoleBadge role={ws.role} />
                   </div>
                   <h3 className="text-lg font-bold text-on-surface mb-1">{ws.name}</h3>
-                  <p className="text-xs text-on-surface-variant font-mono">/{ws.slug}</p>
+                  <p className="text-xs text-on-surface-variant font-mono mb-3">/{ws.slug}</p>
+                  
+                  {ws.owner_name && (
+                    <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/70 italic">
+                      <Users size={10} />
+                      <span>Created by {ws.owner_name}</span>
+                    </div>
+                  )}
                   
                   {ws.id === activeWorkspaceId && (
                     <div className="mt-4 flex items-center gap-1.5 text-[11px] font-bold text-primary">
@@ -265,37 +279,12 @@ export default function WorkspacePage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                       <select 
-                        value={addMemberId}
-                        onChange={e => setAddMemberId(e.target.value)}
-                        className="bg-surface-container-highest border border-outline-variant/10 text-xs font-semibold py-2 px-3 rounded-lg text-on-surface focus:ring-primary w-48"
-                       >
-                         <option value="">Select User to Invite...</option>
-                         {allUsers
-                            .filter(u => !members.some(m => m.user_id === u.id))
-                            .map(u => (
-                              <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                            ))
-                         }
-                       </select>
-                       <select 
-                        value={addMemberRole}
-                        onChange={e => setAddMemberRole(e.target.value)}
-                        className="bg-surface-container-highest border border-outline-variant/10 text-xs font-semibold py-2 px-3 rounded-lg text-on-surface focus:ring-primary"
-                       >
-                         <option value="manager">Manager</option>
-                         <option value="employee">Employee</option>
-                         <option value="guest">Guest</option>
-                       </select>
-                       <button 
-                        onClick={handleAddMember}
-                        disabled={!addMemberId || membersLoading}
-                        className="bg-primary hover:brightness-110 disabled:opacity-50 text-on-primary-fixed p-2 rounded-lg transition-all"
-                       >
-                         <UserPlus size={18} />
-                       </button>
-                    </div>
+                    <button 
+                      onClick={() => setIsInviting(true)}
+                      className="bg-primary hover:brightness-110 text-on-primary-fixed px-4 py-2 rounded-xl flex items-center gap-2 font-bold text-xs transition-all shadow-lg shadow-primary/10"
+                    >
+                      <UserPlus size={16} /> Invite Member
+                    </button>
                     <button 
                       onClick={fetchMembers}
                       className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-highest rounded-lg"
@@ -317,7 +306,7 @@ export default function WorkspacePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/5">
-                      {membersLoading && enrichedMembers.length === 0 ? (
+                      {membersLoading && members.length === 0 ? (
                         Array(3).fill(0).map((_, i) => (
                           <tr key={i} className="animate-pulse">
                             <td className="px-6 py-4"><div className="h-8 w-40 bg-surface-container rounded" /></td>
@@ -327,7 +316,7 @@ export default function WorkspacePage() {
                           </tr>
                         ))
                       ) : (
-                        enrichedMembers.map(m => (
+                        members.map(m => (
                           <tr key={m.user_id} className="hover:bg-surface-container/30 transition-colors group">
                             <td className="px-6 py-4">
                               <div>
@@ -468,6 +457,104 @@ export default function WorkspacePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── INVITE MODAL ────────────────────────────────────────────────── */}
+      {isInviting && (
+        <div 
+          onClick={() => setIsInviting(false)}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all cursor-pointer"
+        >
+          <div 
+            onClick={e => e.stopPropagation()}
+            className="bg-surface-container-high w-full max-w-md rounded-3xl border border-primary/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in zoom-in duration-300 cursor-default"
+          >
+            <div className="p-8 border-b border-outline-variant/10 bg-surface-container-highest/20">
+              <h2 className="text-2xl font-bold flex items-center gap-3">
+                <UserPlus size={24} className="text-primary" /> Invite Team Member
+              </h2>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              {/* Role Select */}
+              <div className="space-y-2">
+                <label className="text-[11px] uppercase tracking-[0.2em] font-black text-on-surface-variant ml-1">Assigned Role</label>
+                <div className="flex gap-2 p-1 bg-surface-container-highest rounded-2xl border border-outline-variant">
+                  {['guest', 'employee', 'manager'].map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setAddMemberRole(r)}
+                      className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${addMemberRole === r ? 'bg-primary text-on-primary-fixed shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Search Box */}
+              <div className="space-y-2">
+                <label className="text-[11px] uppercase tracking-[0.2em] font-black text-on-surface-variant ml-1">Find User</label>
+                <div className="relative">
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-40">@</span>
+                  <input 
+                    type="text" autoFocus
+                    placeholder="Search name or email..."
+                    value={inviteSearch}
+                    onChange={e => setInviteSearch(e.target.value)}
+                    className="w-full bg-surface-container-highest border border-outline-variant rounded-2xl px-5 py-4 pl-10 text-sm focus:ring-2 focus:ring-primary/40 text-on-surface transition-all placeholder:text-on-surface-variant/40"
+                  />
+                </div>
+              </div>
+
+              {/* Search Results */}
+              <div className="space-y-3 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
+                {inviteResults.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest ml-1">Search Results</p>
+                    {inviteResults.map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => {
+                          handleAddMember(u.id);
+                          setIsInviting(false);
+                          setInviteSearch('');
+                        }}
+                        className="w-full bg-surface-container-low hover:bg-primary/5 border border-outline-variant/10 hover:border-primary/40 p-4 rounded-2xl transition-all flex items-center justify-between group text-left"
+                      >
+                        <div>
+                          <p className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{u.name}</p>
+                          <p className="text-[10px] text-on-surface-variant font-mono opacity-60">{u.email}</p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-on-primary-fixed transition-all">
+                          <Plus size={16} />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : inviteSearch.trim() ? (
+                  <div className="py-8 text-center bg-surface-container-low rounded-2xl border border-dashed border-outline-variant/20 italic text-on-surface-variant text-xs">
+                    No matching users found or already in workspace.
+                  </div>
+                ) : (
+                  <div className="py-12 flex flex-col items-center justify-center gap-3 bg-surface-container-low rounded-2xl border border-dashed border-outline-variant/20">
+                    <Users size={32} className="text-on-surface-variant opacity-10" />
+                    <p className="text-[11px] text-on-surface-variant/40 font-medium tracking-wide">Enter a search term above</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-8 pt-0">
+              <button 
+                onClick={() => setIsInviting(false)}
+                className="w-full py-4 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

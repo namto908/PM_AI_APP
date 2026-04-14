@@ -75,6 +75,17 @@ class WorkService:
             if not project:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
+        if body.parent_id:
+            parent_task_resp = await self.repo.get_task(workspace_id, body.parent_id)
+            if not parent_task_resp:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent task not found")
+            
+            if not await self._is_allowed_to_modify_task(workspace_id, parent_task_resp, current_user):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have permission to add subtasks to this task"
+                )
+
         task = Task(
             workspace_id=workspace_id,
             project_id=body.project_id,
@@ -110,6 +121,33 @@ class WorkService:
             
         return created
 
+    async def _is_allowed_to_modify_task(
+        self, workspace_id: uuid.UUID, task: TaskResponse, current_user: dict
+    ) -> bool:
+        user_id = uuid.UUID(current_user["user_id"])
+        system_role = current_user.get("system_role", "employee")
+
+        # 1. Superadmins and system managers have global access
+        if system_role in ("superadmin", "manager"):
+            return True
+
+        # 2. Task creator has access
+        if task.created_by == user_id:
+            return True
+
+        # 2.5. Parent task creator has access
+        if task.parent_id:
+            parent_task = await self.repo.get_task(workspace_id, task.parent_id)
+            if parent_task and parent_task.created_by == user_id:
+                return True
+
+        # 3. Workspace owners and managers have access
+        member = await self.repo.get_workspace_member(workspace_id, user_id)
+        if member and member.role in ("owner", "manager"):
+            return True
+
+        return False
+
     async def update_task(
         self,
         workspace_id: uuid.UUID,
@@ -121,9 +159,22 @@ class WorkService:
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
+        # Permission check for status or description updates
         updates = body.model_dump(exclude_unset=True)
-        old_values = {k: getattr(task, k) for k in updates}
-        updated = await self.repo.update_task(task, updates)
+        if "status" in updates or "description" in updates:
+            if not await self._is_allowed_to_modify_task(workspace_id, task, current_user):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have permission to modify this task's status or description"
+                )
+
+        # Now get the ORM model to actually update
+        task_orm = await self.repo.get_task_model(workspace_id, task_id)
+        if not task_orm:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+        old_values = {k: getattr(task_orm, k) for k in updates if hasattr(task_orm, k)}
+        updated = await self.repo.update_task(task_orm, updates)
 
         user_id = uuid.UUID(current_user["user_id"])
         await self.repo.create_activity(
@@ -140,7 +191,17 @@ class WorkService:
     async def delete_task(
         self, workspace_id: uuid.UUID, task_id: uuid.UUID, current_user: dict
     ) -> None:
-        task = await self.repo.get_task(workspace_id, task_id)
+        task_resp = await self.repo.get_task(workspace_id, task_id)
+        if not task_resp:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+        if not await self._is_allowed_to_modify_task(workspace_id, task_resp, current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete this task"
+            )
+
+        task = await self.repo.get_task_model(workspace_id, task_id)
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
         await self.repo.delete_task(task)
@@ -165,12 +226,14 @@ class WorkService:
         if not can_restore:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only managers and above can restore tasks")
 
-        task = await self.repo.get_task(workspace_id, task_id, include_deleted=True)
+        task = await self.repo.get_task_model(workspace_id, task_id, include_deleted=True)
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
         if not task.is_deleted:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Task is not deleted")
-        return await self.repo.restore_task(task)
+            
+        await self.repo.restore_task(task)
+        return await self.repo.get_task(workspace_id, task_id)
 
     # ---- Comments ----
 

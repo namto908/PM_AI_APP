@@ -12,6 +12,8 @@ export interface AdminUser {
 
 export interface WorkspaceMember {
   user_id: string;
+  name: string;
+  email: string;
   role: string;
   joined_at: string;
 }
@@ -20,7 +22,9 @@ export interface WorkspaceInfo {
   id: string;
   name: string;
   slug: string;
-  role: string;
+  role?: string;
+  owner_name?: string;
+  owner_email?: string;
 }
 
 export interface Group {
@@ -38,7 +42,7 @@ export const adminApi = {
   listTeamUsers: () =>
     client.get<AdminUser[]>('/admin/team'),
 
-  updateUser: (userId: string, data: { system_role?: string; is_active?: boolean }) =>
+  updateUser: (userId: string, data: { system_role?: string; is_active?: boolean; name?: string; email?: string }) =>
     client.patch<AdminUser>(`/admin/users/${userId}`, data),
 
   deleteUser: (userId: string) =>

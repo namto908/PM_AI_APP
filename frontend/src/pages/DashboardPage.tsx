@@ -3,6 +3,7 @@ import {
   AlertTriangle, Bell, ChevronRight, Cpu, Database,
   RefreshCw, Server, Zap, Bot, ClipboardList,
 } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useTasks } from '@/hooks/useTasks';
 import { useAlerts } from '@/hooks/useAlerts';
@@ -168,21 +169,22 @@ function AlertRow({ alert, onResolve }: { alert: Alert; onResolve: () => void })
 export default function DashboardPage() {
   const navigate = useNavigate();
   const workspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
-  const { data: tasks } = useTasks(workspaceId, { page_size: 50, top_level_only: true });
+  const user = useAuthStore((s) => s.user);
+  const { data: tasks } = useTasks(workspaceId, { page_size: 50, top_level_only: true, created_by: user?.id });
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const { alerts, resolve } = useAlerts(workspaceId, false);
   const { servers } = useServers(workspaceId);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const openTasks = tasks?.items.filter(t => t.status !== 'done') ?? [];
+  const openTasks = (tasks?.items || []).filter(t => t.status !== 'done');
   const overdueTasks = openTasks.filter((t) => t.due_date && t.due_date < todayStr);
   const todayTasks = openTasks.filter((t) => t.due_date === todayStr);
   const otherTasks = openTasks.filter((t) => !t.due_date || t.due_date > todayStr);
   const prioritizedTasks = [...todayTasks, ...overdueTasks, ...otherTasks];
 
-  const pendingAlerts = alerts.filter((a) => !a.resolved);
-  const criticalAlerts = alerts.filter((a) => a.severity === 'critical');
-  const downServers = servers.filter((s) => !s.is_active);
+  const pendingAlerts = (alerts || []).filter((a) => !a.resolved);
+  const criticalAlerts = (alerts || []).filter((a) => a.severity === 'critical');
+  const downServers = (servers || []).filter((s) => !s.is_active);
 
   if (!workspaceId) {
     return (
@@ -330,7 +332,7 @@ export default function DashboardPage() {
                     <Server size={14} className="text-primary" />
                     Active servers
                   </div>
-                  <span className="font-bold text-on-surface">{servers.filter((s) => s.is_active).length}</span>
+                  <span className="font-bold text-on-surface">{(servers || []).filter((s) => s.is_active).length}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm py-1">
                   <div className="flex items-center gap-2 text-on-surface-variant">

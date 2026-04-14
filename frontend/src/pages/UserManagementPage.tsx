@@ -9,9 +9,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   User as UserIcon,
-  Timer,
   Trash2,
   Lock,
   X,
@@ -24,15 +22,24 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Add User Modal State
+  // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     username: '',
     password: '',
+    system_role: 'employee'
+  });
+
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    email: '',
     system_role: 'employee'
   });
 
@@ -102,6 +109,34 @@ export default function UserManagementPage() {
     }
   };
 
+  const startEditing = (user: AdminUser) => {
+    setEditingUser(user);
+    setEditFormData({
+      name: user.name,
+      email: user.email,
+      system_role: user.system_role
+    });
+    setFormError('');
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setIsSubmitting(true);
+    setFormError('');
+    try {
+      const { data } = await adminApi.updateUser(editingUser.id, editFormData);
+      setUsers(users.map(u => u.id === editingUser.id ? data : u));
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+    } catch (err: any) {
+      setFormError(err.response?.data?.detail || 'Failed to update user');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -143,10 +178,9 @@ export default function UserManagementPage() {
         </div>
       </div>
 
-      {/* Bento Layout Grid */}
+      {/* Main Layout Grid */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Main User Table (Left 8 Columns) */}
-        <div className="col-span-12 lg:col-span-8 space-y-4">
+        <div className="col-span-12 space-y-4">
           <div className="bg-surface rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
             {/* Table Search & Tool Bar */}
             <div className="p-5 border-b border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4">
@@ -203,7 +237,7 @@ export default function UserManagementPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-surface-container border border-outline-variant flex items-center justify-center text-primary overflow-hidden">
                             {user.avatar_url ? (
-                              <img src={user.avatar_url} className="w-full h-full object-cover" />
+                              <img src={user.avatar_url} className="w-full h-full object-cover" alt={user.name} />
                             ) : (
                               <UserIcon size={20} />
                             )}
@@ -250,6 +284,7 @@ export default function UserManagementPage() {
                         <div className="flex justify-end gap-1">
                           <button 
                             disabled={user.is_root}
+                            onClick={() => startEditing(user)}
                             className="p-2 text-on-surface-variant/40 hover:text-primary transition-colors hover:bg-primary/5 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed"
                           >
                             <Edit2 size={16} />
@@ -281,82 +316,6 @@ export default function UserManagementPage() {
                 <button className="w-9 h-9 flex items-center justify-center bg-surface-container border border-outline-variant rounded-xl text-on-surface-variant/40 hover:bg-surface-container-highest transition-colors">
                   <ChevronRight size={16} />
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Info Cards (Right 4 Columns) */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          {/* Permission Matrix Preview */}
-          <div className="bg-surface rounded-2xl border border-outline-variant shadow-sm p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-5">
-              <ShieldAlert size={80} />
-            </div>
-            <h3 className="text-lg font-bold font-headline mb-4 flex items-center gap-2 text-on-surface">
-              <ShieldCheck className="text-primary" size={20} />
-              Role Matrix
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-surface-container rounded-xl border border-outline-variant">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Superadmin Access</span>
-                  <div className="flex gap-1">
-                    {['R', 'W', 'D', 'A'].map(p => (
-                      <div key={p} className="w-5 h-5 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-[8px] text-primary font-bold">{p}</div>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[10px] text-on-surface-variant/50 leading-relaxed">Full system access, node management, and security overrides.</p>
-              </div>
-              <div className="p-4 bg-surface-container rounded-xl border border-outline-variant opactiy-60">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Manager Access</span>
-                  <div className="flex gap-1">
-                    {['R', 'W', 'D'].map(p => (
-                      <div key={p} className="w-5 h-5 rounded bg-secondary/10 border border-secondary/20 flex items-center justify-center text-[8px] text-secondary font-bold">{p}</div>
-                    ))}
-                    <div className="w-5 h-5 rounded bg-surface-container-highest border border-outline-variant flex items-center justify-center text-[8px] text-on-surface/20 font-bold">A</div>
-                  </div>
-                </div>
-                <p className="text-[10px] text-on-surface-variant/50 leading-relaxed">Resource planning, member management, and task approval flow.</p>
-              </div>
-            </div>
-            <button className="w-full mt-6 py-3 bg-surface-container-highest text-on-surface text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-surface-container-high transition-all border border-outline-variant">
-              Edit Hierarchy
-            </button>
-          </div>
-
-          {/* Audit Logs Quick View */}
-          <div className="bg-surface rounded-2xl border border-outline-variant shadow-sm p-6">
-            <h3 className="text-lg font-bold font-headline mb-5 flex items-center gap-2 text-on-surface">
-              <Timer className="text-tertiary" size={20} />
-              Recent Audit
-            </h3>
-            <div className="space-y-6 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-border-dim">
-              <div className="flex gap-4 relative">
-                <div className="w-3.5 h-3.5 rounded-full bg-primary border-4 border-surface z-10"></div>
-                <div>
-                  <p className="text-xs text-on-surface font-bold">Role Escalation</p>
-                  <p className="text-[10px] text-on-surface-variant/50 mt-0.5">Elias promoted Sarah Chen to Manager</p>
-                  <p className="text-[9px] text-on-surface-variant/30 font-bold tracking-wider uppercase mt-1">14:23 · Today</p>
-                </div>
-              </div>
-              <div className="flex gap-4 relative">
-                <div className="w-3.5 h-3.5 rounded-full bg-error border-4 border-surface z-10"></div>
-                <div>
-                  <p className="text-xs text-on-surface font-bold">Node Shutdown</p>
-                  <p className="text-[10px] text-on-surface-variant/50 mt-0.5">System auto-deactivated Marcus for inactivity</p>
-                  <p className="text-[9px] text-on-surface-variant/30 font-bold tracking-wider uppercase mt-1">09:12 · Today</p>
-                </div>
-              </div>
-              <div className="flex gap-4 relative">
-                <div className="w-3.5 h-3.5 rounded-full bg-secondary border-4 border-surface z-10"></div>
-                <div>
-                  <p className="text-xs text-on-surface font-bold">Invite Sent</p>
-                  <p className="text-[10px] text-on-surface-variant/50 mt-0.5">External invite sent to engineering@nexus.ai</p>
-                  <p className="text-[9px] text-on-surface-variant/30 font-bold tracking-wider uppercase mt-1">Yesterday</p>
-                </div>
               </div>
             </div>
           </div>
@@ -476,6 +435,102 @@ export default function UserManagementPage() {
                     </>
                   ) : (
                     'Create User'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-background/95 backdrop-blur-xl animate-in fade-in duration-300"
+            onClick={() => !isSubmitting && setIsEditModalOpen(false)}
+          />
+          <div className="bg-surface w-full max-w-md rounded-3xl border border-outline-variant shadow-2xl relative z-10 animate-in zoom-in-95 fade-in duration-300 overflow-hidden">
+            <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container/30">
+              <div>
+                <h3 className="text-xl font-bold font-headline text-on-surface">Edit User</h3>
+                <p className="text-xs text-on-surface-variant/50 mt-1">Modify account details</p>
+              </div>
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-2 text-on-surface-variant/40 hover:text-on-surface hover:bg-surface-container rounded-xl transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateUser} className="p-6 space-y-4">
+              {formError && (
+                <div className="p-3 bg-error/10 border border-error/20 rounded-xl text-error text-xs font-medium flex items-center gap-2">
+                  <ShieldAlert size={14} />
+                  {formError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest ml-1">Full Name</label>
+                  <input 
+                    type="text"
+                    required
+                    placeholder="Enter full name"
+                    className="w-full bg-surface-container-highest/50 border-outline-variant rounded-xl text-sm focus:ring-1 focus:ring-primary/20 text-on-surface px-4 py-2.5"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest ml-1">Email Address</label>
+                  <input 
+                    type="email"
+                    required
+                    placeholder="email@example.com"
+                    className="w-full bg-surface-container-highest/50 border-outline-variant rounded-xl text-sm focus:ring-1 focus:ring-primary/20 text-on-surface px-4 py-2.5"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest ml-1">System Role</label>
+                  <select 
+                    className="w-full bg-surface-container-highest/50 border-outline-variant rounded-xl text-sm focus:ring-1 focus:ring-primary/20 text-on-surface px-4 py-2.5"
+                    value={editFormData.system_role}
+                    onChange={(e) => setEditFormData({...editFormData, system_role: e.target.value})}
+                  >
+                    <option value="manager" className="bg-surface">Manager</option>
+                    <option value="employee" className="bg-surface">Employee</option>
+                    <option value="guest" className="bg-surface">Guest</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 bg-surface-container text-on-surface text-sm font-semibold rounded-xl hover:bg-surface-container-highest transition-colors border border-outline-variant"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2.5 bg-primary text-on-primary-fixed text-sm font-bold rounded-xl hover:brightness-110 transition-all shadow-lg shadow-primary/10 flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
                   )}
                 </button>
               </div>

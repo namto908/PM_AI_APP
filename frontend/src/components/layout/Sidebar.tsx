@@ -37,42 +37,42 @@ export default function Sidebar() {
 
   useEffect(() => {
     adminApi.listWorkspaces().then(({ data }) => {
-      setWorkspaces(data);
+      setWorkspaces(Array.isArray(data) ? data : []);
     }).catch(() => {});
   }, []);
 
-  const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
+  const activeWs = Array.isArray(workspaces) ? workspaces.find((w) => w.id === activeWorkspaceId) : undefined;
   const roleCfg = ROLE_DISPLAY[user?.system_role ?? 'employee'];
 
   return (
-    <aside className="w-60 flex-shrink-0 bg-surface border-r border-outline-variant flex flex-col">
-      <div className="px-4 py-5 font-bold text-xl text-on-surface select-none">
-        TaskOps <span className="text-indigo-500">AI</span>
+    <aside className="w-60 h-full flex-shrink-0 bg-surface border-r border-outline-variant flex flex-col">
+      <div className="px-6 py-8 font-bold text-xl text-on-surface select-none">
+        TaskOps <span className="text-primary font-black">AI</span>
       </div>
 
       {/* Workspace selector */}
-      <div className="px-3 mb-3 relative">
+      <div className="px-4 mb-6 relative">
         <button
           onClick={() => setOpen(!open)}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors text-left"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface-container hover:brightness-95 transition-all text-left shadow-sm border border-outline-variant/30"
         >
-          <div className="w-5 h-5 rounded bg-primary flex items-center justify-center text-on-primary-fixed text-[10px] font-bold flex-shrink-0">
+          <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-on-primary-fixed text-[10px] font-black flex-shrink-0">
             {(activeWs?.name?.[0] ?? 'W').toUpperCase()}
           </div>
-          <span className="text-sm font-medium text-on-surface truncate flex-1">
+          <span className="text-sm font-bold text-on-surface truncate flex-1">
             {activeWs?.name ?? 'Select workspace'}
           </span>
-          <ChevronDown size={14} className="text-gray-400" />
+          <ChevronDown size={14} className="text-on-surface-variant/50" />
         </button>
         {open && workspaces.length > 0 && (
-          <div className="absolute top-full left-3 right-3 mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-10 py-1">
+          <div className="absolute top-full left-4 right-4 mt-2 bg-surface border border-outline-variant rounded-xl shadow-xl z-50 py-1.5 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {workspaces.map((ws) => (
               <button
                 key={ws.id}
                 onClick={() => { setActiveWorkspace(ws.id); setOpen(false); }}
-                className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                   ws.id === activeWorkspaceId
-                    ? 'bg-primary/10 text-primary'
+                    ? 'bg-primary/10 text-primary font-bold'
                     : 'text-on-surface-variant hover:bg-surface-container'
                 }`}
               >
@@ -83,17 +83,18 @@ export default function Sidebar() {
         )}
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      {/* Main Nav Items - Grows to fill space */}
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
         {links.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-on-surface-variant hover:bg-surface-container'
+                  ? 'bg-primary text-on-primary-fixed font-bold shadow-md shadow-primary/20'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               }`
             }
           >
@@ -102,15 +103,18 @@ export default function Sidebar() {
           </NavLink>
         ))}
 
+        {/* Dynamic section border */}
+        <div className="my-4 mx-3 border-t border-outline-variant/30" />
+
         {/* Workspaces: For Managers and Superadmins */}
         {(user?.system_role === 'superadmin' || user?.system_role === 'manager') && (
           <NavLink
             to="/workspaces"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-on-surface-variant hover:bg-surface-container'
+                  ? 'bg-primary text-on-primary-fixed font-bold shadow-md shadow-primary/20'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               }`
             }
           >
@@ -124,10 +128,10 @@ export default function Sidebar() {
           <NavLink
             to="/admin/users"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-on-surface-variant hover:bg-surface-container'
+                  ? 'bg-primary text-on-primary-fixed font-bold shadow-md shadow-primary/20'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               }`
             }
           >
@@ -141,10 +145,10 @@ export default function Sidebar() {
           <NavLink
             to="/manager/team"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                 isActive
-                  ? 'bg-teal-500/10 text-teal-400'
-                  : 'text-on-surface-variant hover:bg-surface-container'
+                  ? 'bg-secondary text-on-secondary-fixed font-bold shadow-md shadow-secondary/20'
+                  : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
               }`
             }
           >
@@ -154,23 +158,28 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* Role Badge + Settings */}
-      <div className="p-3 space-y-1">
-        {/* Current role indicator */}
+      {/* User Profile + Settings - Stay at the bottom */}
+      <div className="p-4 mt-auto border-t border-outline-variant/30 bg-surface-container/20">
         {user && roleCfg && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant mb-1">
-            <div className="w-7 h-7 rounded-full bg-surface-container-highest flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-on-surface">
+          <div className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-surface border border-outline-variant shadow-sm mb-3">
+            <div className="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center flex-shrink-0 text-xs font-black text-on-surface shadow-inner">
               {user.name?.[0]?.toUpperCase() ?? '?'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-on-surface truncate">{user.name}</p>
-              <p className={`text-[10px] font-bold uppercase tracking-wider ${roleCfg.color}`}>{roleCfg.label}</p>
+              <p className="text-xs font-bold text-on-surface truncate">{user.name}</p>
+              <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${roleCfg.color}`}>{roleCfg.label}</p>
             </div>
           </div>
         )}
         <NavLink
           to="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
+              isActive
+                ? 'bg-primary/10 text-primary font-bold shadow-sm'
+                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+            }`
+          }
         >
           <Settings size={18} />
           Settings

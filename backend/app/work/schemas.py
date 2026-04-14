@@ -75,6 +75,9 @@ class TaskResponse(BaseModel):
     status: str
     priority: str
     assignee_id: Optional[uuid.UUID]
+    created_by: Optional[uuid.UUID]
+    creator_name: Optional[str] = None
+    creator_avatar: Optional[str] = None
     due_date: Optional[date]
     tags: List[str]
     is_deleted: bool
@@ -114,6 +117,7 @@ class TaskFilter(BaseModel):
     status: Optional[str] = None
     priority: Optional[str] = None
     assignee_id: Optional[uuid.UUID] = None
+    created_by: Optional[uuid.UUID] = None
     project_id: Optional[uuid.UUID] = None
     parent_id: Optional[uuid.UUID] = None
     top_level_only: bool = False

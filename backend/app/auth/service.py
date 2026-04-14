@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, outerjoin
+from sqlalchemy.orm import aliased
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timezone, timedelta
@@ -100,7 +101,18 @@ class AuthService:
         await self.db.commit()
         await self.db.refresh(workspace)
 
-        return WorkspaceResponse(id=workspace.id, name=workspace.name, slug=workspace.slug, role="owner")
+        # Fetch owner info for the response
+        owner_result = await self.db.execute(select(User).where(User.id == user_id))
+        owner = owner_result.scalar_one()
+
+        return WorkspaceResponse(
+            id=workspace.id, 
+            name=workspace.name, 
+            slug=workspace.slug, 
+            role="owner",
+            owner_name=owner.name,
+            owner_email=owner.email
+        )
 
     async def update_me(self, user_id: str, body: UserUpdateRequest) -> User:
         user = await self.get_me(user_id)
@@ -127,15 +139,39 @@ class AuthService:
 
     async def list_workspaces(self, current_user: dict) -> list[WorkspaceResponse]:
         user_id = uuid.UUID(current_user["user_id"])
-        result = await self.db.execute(
-            select(Workspace, WorkspaceMember.role)
-            .join(WorkspaceMember, WorkspaceMember.workspace_id == Workspace.id)
-            .where(WorkspaceMember.user_id == user_id)
-        )
+        is_superadmin = current_user.get("system_role") == "superadmin"
+        
+        Owner = aliased(User)
+        
+        if is_superadmin:
+            # Superadmin sees everything. Join with Owner, and optionally join with Member to get current user's role if they have one.
+            query = (
+                select(Workspace, Owner, WorkspaceMember.role)
+                .join(Owner, Owner.id == Workspace.owner_id)
+                .outerjoin(WorkspaceMember, (WorkspaceMember.workspace_id == Workspace.id) & (WorkspaceMember.user_id == user_id))
+            )
+        else:
+            # Regular users see only workspaces they are members of.
+            query = (
+                select(Workspace, Owner, WorkspaceMember.role)
+                .join(Owner, Owner.id == Workspace.owner_id)
+                .join(WorkspaceMember, WorkspaceMember.workspace_id == Workspace.id)
+                .where(WorkspaceMember.user_id == user_id)
+            )
+            
+        result = await self.db.execute(query)
         rows = result.all()
+        
         return [
-            WorkspaceResponse(id=ws.id, name=ws.name, slug=ws.slug, role=role)
-            for ws, role in rows
+            WorkspaceResponse(
+                id=ws.id, 
+                name=ws.name, 
+                slug=ws.slug, 
+                role=role or ("superadmin" if is_superadmin else None),
+                owner_name=owner.name,
+                owner_email=owner.email
+            )
+            for ws, owner, role in rows
         ]
 
     async def delete_workspace(self, workspace_id: str, current_user: dict) -> None:

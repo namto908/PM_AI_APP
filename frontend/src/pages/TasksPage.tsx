@@ -70,8 +70,12 @@ function TaskCardContent({ task, isActive, isDragging = false }: { task: Task; i
 
       <div className="flex items-center justify-between">
         <div className="flex -space-x-2">
-          {task.assignee_id && (
-            <div className="w-6 h-6 rounded-full bg-primary/20 border-2 border-surface flex items-center justify-center text-[9px] font-bold text-primary">A</div>
+          {task.creator_avatar ? (
+            <img src={task.creator_avatar} alt="avatar" className="w-6 h-6 rounded-full object-cover border-2 border-surface shadow-sm" title={task.creator_name || 'Owner'} />
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-primary/20 border-2 border-surface flex items-center justify-center text-[9px] font-bold text-primary shadow-sm" title={task.creator_name || 'Owner'}>
+              {task.creator_name ? task.creator_name.charAt(0).toUpperCase() : '—'}
+            </div>
           )}
         </div>
         <div className="flex items-center gap-3">

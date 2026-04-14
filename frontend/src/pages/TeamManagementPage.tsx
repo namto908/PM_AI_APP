@@ -216,7 +216,9 @@ export default function TeamManagementPage() {
                 <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Name</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Role</th>
                 <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Toggle Status</th>
+                {user?.system_role === 'superadmin' && (
+                  <th className="px-6 py-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Toggle Status</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/5">
@@ -268,26 +270,28 @@ export default function TeamManagementPage() {
                   </td>
 
                   {/* Toggle Action */}
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleToggleStatus(u)}
-                      disabled={updatingId === u.id}
-                      title={u.is_active ? 'Deactivate account' : 'Activate account'}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-40 ${
-                        u.is_active
-                          ? 'text-error/80 hover:bg-error/10 border border-transparent hover:border-error/20'
-                          : 'text-primary hover:bg-primary/10 border border-transparent hover:border-primary/20'
-                      }`}
-                    >
-                      {updatingId === u.id ? (
-                        <RefreshCw size={12} className="animate-spin" />
-                      ) : u.is_active ? (
-                        <><XCircle size={13} /> Deactivate</>
-                      ) : (
-                        <><CheckCircle2 size={13} /> Activate</>
-                      )}
-                    </button>
-                  </td>
+                  {user?.system_role === 'superadmin' && (
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleToggleStatus(u)}
+                        disabled={updatingId === u.id}
+                        title={u.is_active ? 'Deactivate account' : 'Activate account'}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-40 ${
+                          u.is_active
+                            ? 'text-error/80 hover:bg-error/10 border border-transparent hover:border-error/20'
+                            : 'text-primary hover:bg-primary/10 border border-transparent hover:border-primary/20'
+                        }`}
+                      >
+                        {updatingId === u.id ? (
+                          <RefreshCw size={12} className="animate-spin" />
+                        ) : u.is_active ? (
+                          <><XCircle size={13} /> Deactivate</>
+                        ) : (
+                          <><CheckCircle2 size={13} /> Activate</>
+                        )}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -312,8 +316,8 @@ export default function TeamManagementPage() {
       <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/15 rounded-xl">
         <Shield size={14} className="text-primary mt-0.5 flex-shrink-0" />
         <p className="text-xs text-on-surface-variant leading-relaxed">
-          As a <span className="text-primary font-semibold">Manager</span>, you can activate or deactivate employee and guest accounts.
-          To modify roles or delete accounts, please contact a Superadmin.
+          As a <span className="text-primary font-semibold">Manager</span>, you can view the status of employee and guest accounts.
+          Only <span className="text-amber-400 font-semibold">Superadmins</span> can activate, deactivate, modify roles, or delete accounts.
         </p>
       </div>
     </div>

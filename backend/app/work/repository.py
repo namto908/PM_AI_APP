@@ -5,12 +5,22 @@ import uuid
 from datetime import datetime, timezone
 
 from app.work.models import Project, Task, TaskComment, TaskActivity
-from app.work.schemas import TaskFilter
+from app.auth.models import User, WorkspaceMember
+from app.work.schemas import TaskFilter, TaskResponse
 
 
 class WorkRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def get_workspace_member(self, workspace_id: uuid.UUID, user_id: uuid.UUID) -> WorkspaceMember | None:
+        result = await self.db.execute(
+            select(WorkspaceMember).where(
+                WorkspaceMember.workspace_id == workspace_id,
+                WorkspaceMember.user_id == user_id
+            )
+        )
+        return result.scalar_one_or_none()
 
     # ---- Projects ----
 
@@ -38,8 +48,12 @@ class WorkRepository:
 
     # ---- Tasks ----
 
-    async def get_tasks(self, workspace_id: uuid.UUID, filters: TaskFilter) -> tuple[list[Task], int]:
-        query = select(Task).where(Task.workspace_id == workspace_id)
+    async def get_tasks(self, workspace_id: uuid.UUID, filters: TaskFilter) -> tuple[list[TaskResponse], int]:
+        query = (
+            select(Task, User.name, User.avatar_url)
+            .outerjoin(User, Task.created_by == User.id)
+            .where(Task.workspace_id == workspace_id)
+        )
         if not filters.include_deleted:
             query = query.where(Task.is_deleted == False)
 
@@ -49,6 +63,8 @@ class WorkRepository:
             query = query.where(Task.priority == filters.priority)
         if filters.assignee_id:
             query = query.where(Task.assignee_id == filters.assignee_id)
+        if filters.created_by:
+            query = query.where(Task.created_by == filters.created_by)
         if filters.project_id:
             query = query.where(Task.project_id == filters.project_id)
         if filters.top_level_only:
@@ -56,7 +72,9 @@ class WorkRepository:
         if filters.parent_id:
             query = query.where(Task.parent_id == filters.parent_id)
 
-        count_result = await self.db.execute(select(func.count()).select_from(query.subquery()))
+        # Count total ignoring pagination
+        count_query = select(func.count()).select_from(query.subquery())
+        count_result = await self.db.execute(count_query)
         total = count_result.scalar_one()
 
         offset = (filters.page - 1) * filters.page_size
@@ -64,28 +82,56 @@ class WorkRepository:
         query = query.offset(offset).limit(filters.page_size)
 
         result = await self.db.execute(query)
-        return list(result.scalars().all()), total
+        rows = result.all()
+        tasks = []
+        for task, name, avatar in rows:
+            tr = TaskResponse.model_validate(task)
+            tr.creator_name = name
+            tr.creator_avatar = avatar
+            tasks.append(tr)
+        return tasks, total
 
-    async def get_task(self, workspace_id: uuid.UUID, task_id: uuid.UUID, include_deleted: bool = False) -> Task | None:
+    async def get_task_model(self, workspace_id: uuid.UUID, task_id: uuid.UUID, include_deleted: bool = False) -> Task | None:
         query = select(Task).where(Task.id == task_id, Task.workspace_id == workspace_id)
         if not include_deleted:
             query = query.where(Task.is_deleted == False)
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def create_task(self, task: Task) -> Task:
+    async def get_task(self, workspace_id: uuid.UUID, task_id: uuid.UUID, include_deleted: bool = False) -> TaskResponse | None:
+        query = (
+            select(Task, User.name, User.avatar_url)
+            .outerjoin(User, Task.created_by == User.id)
+            .where(Task.id == task_id, Task.workspace_id == workspace_id)
+        )
+        if not include_deleted:
+            query = query.where(Task.is_deleted == False)
+        result = await self.db.execute(query)
+        row = result.first()
+        if not row:
+            return None
+            
+        task, name, avatar = row
+        tr = TaskResponse.model_validate(task)
+        tr.creator_name = name
+        tr.creator_avatar = avatar
+        return tr
+
+    async def create_task(self, task: Task) -> TaskResponse:
         self.db.add(task)
         await self.db.commit()
         await self.db.refresh(task)
-        return task
+        # Return enriched response
+        return await self.get_task(task.workspace_id, task.id)
 
-    async def update_task(self, task: Task, updates: dict) -> Task:
+    async def update_task(self, task: Task, updates: dict) -> TaskResponse:
         for key, value in updates.items():
             setattr(task, key, value)
         task.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await self.db.commit()
         await self.db.refresh(task)
-        return task
+        # Return enriched response
+        return await self.get_task(task.workspace_id, task.id)
 
     async def get_deleted_tasks(self, workspace_id: uuid.UUID, user_id: uuid.UUID | None = None) -> list[Task]:
         """Return soft-deleted tasks. If user_id is given, filter to that user's tasks only."""
@@ -112,6 +158,7 @@ class WorkRepository:
             await self._restore_task_recursive(subtask)
 
 
+    async def _soft_delete_task_recursive(self, task: Task) -> None:
         """Helper to recursively mark a task and its subtasks as deleted."""
         task.is_deleted = True
         task.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)

@@ -20,13 +20,29 @@ def _require_superadmin(current_user: dict) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Superadmin access required")
 
 
-def _can_manage_workspace_members(current_user: dict, workspace_role: str | None = None) -> bool:
+async def _can_manage_workspace_members(
+    user_id: uuid.UUID, 
+    workspace_id: uuid.UUID, 
+    system_role: str, 
+    db: AsyncSession
+) -> bool:
     """Returns True if user is superadmin OR a workspace owner/manager."""
-    if current_user.get("system_role") == "superadmin":
+    if system_role == "superadmin":
         return True
-    wr = workspace_role or current_user.get("workspace_role", "employee")
+    
+    # Query the database for the user's role in this specific workspace
+    result = await db.execute(
+        select(WorkspaceMember.role).where(
+            (WorkspaceMember.workspace_id == workspace_id) & 
+            (WorkspaceMember.user_id == user_id)
+        )
+    )
+    role = result.scalar_one_or_none()
+    if not role:
+        return False
+        
     try:
-        return WORKSPACE_ROLE_ORDER.index(wr) >= WORKSPACE_ROLE_ORDER.index("manager")
+        return WORKSPACE_ROLE_ORDER.index(role) >= WORKSPACE_ROLE_ORDER.index("manager")
     except ValueError:
         return False
 
@@ -110,7 +126,7 @@ async def create_user(
 
 
 @router.patch("/users/{user_id}", response_model=UserResponse)
-async def update_user_role(
+async def update_user(
     user_id: uuid.UUID,
     body: AdminUserUpdate,
     current_user: dict = Depends(get_current_user),
@@ -128,6 +144,16 @@ async def update_user_role(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The root superadmin account cannot be modified via API"
         )
+
+    if body.name is not None:
+        user.name = body.name
+
+    if body.email is not None and body.email != user.email:
+        # Check uniqueness
+        conflict = await db.execute(select(User).where(User.email == body.email))
+        if conflict.scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+        user.email = str(body.email)
 
     if body.system_role is not None:
         # Protection: Prevent assigning "superadmin" role to anyone else
@@ -185,16 +211,20 @@ async def list_workspace_members(
 ):
     # Any authenticated workspace member may list members; superadmin always allowed
     result = await db.execute(
-        select(WorkspaceMember).where(WorkspaceMember.workspace_id == workspace_id)
+        select(WorkspaceMember, User.name, User.email)
+        .join(User, User.id == WorkspaceMember.user_id)
+        .where(WorkspaceMember.workspace_id == workspace_id)
     )
-    members = result.scalars().all()
+    rows = result.all()
     return [
         WorkspaceMemberResponse(
             user_id=m.user_id,
+            name=name,
+            email=email,
             role=m.role,
             joined_at=m.joined_at.isoformat(),
         )
-        for m in members
+        for m, name, email in rows
     ]
 
 
@@ -205,7 +235,12 @@ async def add_workspace_member(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not _can_manage_workspace_members(current_user):
+    if not await _can_manage_workspace_members(
+        user_id=uuid.UUID(current_user["user_id"]),
+        workspace_id=workspace_id,
+        system_role=current_user.get("system_role", "employee"),
+        db=db
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only workspace managers and above can add members")
 
     # Verify workspace exists
@@ -241,7 +276,12 @@ async def remove_workspace_member(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not _can_manage_workspace_members(current_user):
+    if not await _can_manage_workspace_members(
+        user_id=uuid.UUID(current_user["user_id"]),
+        workspace_id=workspace_id,
+        system_role=current_user.get("system_role", "employee"),
+        db=db
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only workspace managers and above can remove members")
 
     result = await db.execute(
@@ -270,7 +310,12 @@ async def update_workspace_member_role(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if not _can_manage_workspace_members(current_user):
+    if not await _can_manage_workspace_members(
+        user_id=uuid.UUID(current_user["user_id"]),
+        workspace_id=workspace_id,
+        system_role=current_user.get("system_role", "employee"),
+        db=db
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only workspace managers and above can update roles")
 
     result = await db.execute(
